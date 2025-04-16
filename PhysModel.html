@@ -70,6 +70,7 @@
     <button onclick="playSynth('A')">Play A</button>
     <button onclick="playSynth('B')">Play B</button>
     <button onclick="playSynth('C')">Play C</button>
+    <button onclick="playEmChord()">Play E Minor Chord</button>
 </div>
 <script>
     // Initialize Audio Context
@@ -148,40 +149,73 @@
 
     // Function to Play a Note
     // Guitar Sound Generation
-    function guitarSound(ctx, frequency, duration) {
-        const oscillator = ctx.createOscillator();
-        oscillator.type = "sawtooth"; // Sawtooth wave for more realistic harmonics
-        oscillator.frequency.setValueAtTime(frequency, ctx.currentTime);
-        const gain = ctx.createGain();
-        gain.gain.setValueAtTime(0, ctx.currentTime);
-        gain.gain.linearRampToValueAtTime(1.0, ctx.currentTime + 0.02); // Quick attack
-        gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + duration); // Quick decay to mimic pluck
-
-        // Body resonance effect for pluck
-        const bodyFilter = ctx.createBiquadFilter();
-        bodyFilter.type = "lowpass";
-        bodyFilter.frequency.setValueAtTime(2200, ctx.currentTime); // High frequency for initial brightness
-        bodyFilter.frequency.exponentialRampToValueAtTime(800, ctx.currentTime + duration); // Frequency drop for realism
-
-        // Physical resonance simulation
-        const resonance = ctx.createConvolver();
-        const impulse = ctx.createBuffer(2, ctx.sampleRate / 2, ctx.sampleRate); // Simulated impulse response
-        const left = impulse.getChannelData(0);
-        const right = impulse.getChannelData(1);
-        for (let i = 0; i < left.length; i++) {
-            left[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / left.length, 2); // Damped random signal
-            right[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / right.length, 2); // Damped random signal
-        }
-        resonance.buffer = impulse;
-
-        oscillator.connect(bodyFilter);
-        bodyFilter.connect(resonance);
-        resonance.connect(gain);
-        gain.connect(ctx.destination);
-
-        oscillator.start();
-        oscillator.stop(ctx.currentTime + duration); // Stop after the specified duration
+function playEmChord() {
+    const eFrequency = 164.81; // E3
+    const gFrequency = 196.00; // G3
+    const bFrequency = 246.94; // B3
+    const chordDuration = 2; // 2 seconds
+    const selectedInstrument = document.getElementById("instrument").value;
+    if (selectedInstrument === "flute") {
+        fluteSound(audioContext, eFrequency, chordDuration);
+        fluteSound(audioContext, gFrequency, chordDuration);
+        fluteSound(audioContext, bFrequency, chordDuration);
+    } else if (selectedInstrument === "tubularBell") {
+        tubularBellSound(audioContext, eFrequency, chordDuration);
+        tubularBellSound(audioContext, gFrequency, chordDuration);
+        tubularBellSound(audioContext, bFrequency, chordDuration);
+    } else if (selectedInstrument === "marimba") {
+        marimbaSound(audioContext, eFrequency, chordDuration);
+        marimbaSound(audioContext, gFrequency, chordDuration);
+        marimbaSound(audioContext, bFrequency, chordDuration);
+    } else if (selectedInstrument === "guitar") {
+        guitarSound(audioContext, eFrequency, chordDuration);
+        guitarSound(audioContext, gFrequency, chordDuration);
+        guitarSound(audioContext, bFrequency, chordDuration);
     }
+    }
+function guitarSound(ctx, frequency, duration) {
+    const oscillator = ctx.createOscillator();
+    oscillator.type = "sawtooth"; // Sawtooth wave for more realistic harmonics
+    oscillator.frequency.setValueAtTime(frequency, ctx.currentTime);
+
+    const detunedOscillator = ctx.createOscillator(); // Enhance with detuned harmonic oscillator
+    detunedOscillator.type = "sawtooth";
+    detunedOscillator.detune.setValueAtTime(-12, ctx.currentTime); // Detune for harmonic warmth
+    detunedOscillator.frequency.setValueAtTime(frequency, ctx.currentTime);
+
+    const gain = ctx.createGain();
+    gain.gain.setValueAtTime(0, ctx.currentTime);
+    gain.gain.linearRampToValueAtTime(1.0, ctx.currentTime + 0.02); // Quick attack
+    gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + duration); // Quick decay to mimic pluck
+
+    // Body resonance effect for pluck
+    const bodyFilter = ctx.createBiquadFilter();
+    bodyFilter.type = "lowpass";
+    bodyFilter.frequency.setValueAtTime(2200, ctx.currentTime); // High frequency for initial brightness
+    bodyFilter.frequency.exponentialRampToValueAtTime(800, ctx.currentTime + duration); // Frequency drop for realism
+
+    // Physical resonance simulation
+    const resonance = ctx.createConvolver();
+    const impulse = ctx.createBuffer(2, ctx.sampleRate / 2, ctx.sampleRate); // Simulated impulse response
+    const left = impulse.getChannelData(0);
+    const right = impulse.getChannelData(1);
+    for (let i = 0; i < left.length; i++) {
+        left[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / left.length, 2); // Damped random signal
+        right[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / right.length, 2); // Damped random signal
+    }
+    resonance.buffer = impulse;
+
+    oscillator.connect(bodyFilter);
+    detunedOscillator.connect(bodyFilter); // Connect detuned oscillator
+    bodyFilter.connect(resonance);
+    resonance.connect(gain);
+    gain.connect(ctx.destination);
+
+    oscillator.start();
+    detunedOscillator.start(); // Start detuned oscillator
+    oscillator.stop(ctx.currentTime + duration); // Stop after the specified duration
+    detunedOscillator.stop(ctx.currentTime + duration); // Stop detuned oscillator
+}
 
     function makeDistortionCurve(amount) {
         const k = typeof amount === 'number' ? amount : 50;
