@@ -60,38 +60,28 @@
     </select>
 </div>
 <div>
-    <button onclick="playSynth('A')">Play A</button>
-    <button onclick="playSynth('B')">Play B</button>
-    <button onclick="playSynth('C')">Play C</button>
+    <button onclick="playSynth('A')">A</button>
+    <button onclick="playSynth('B')">B</button>
+    <button onclick="playSynth('C')">C</button>
     <hr/>
-    <button onclick="playCChord()">Play C Major Chord</button>
-    <button onclick="playDChord()">Play D Major Chord</button>
-    <button onclick="playGChord()">Play G Major Chord</button>
-    <button onclick="playGChord()">Play G Major Chord</button>
-    <button onclick="playFChord()">Play F Major Chord</button>
-    <button onclick="playFmChord()">Play F Minor Chord</button>
-    <button onclick="playF7Chord()">Play F7 Chord</button>
-    <button onclick="playFm7Chord()">Play Fm7 Chord</button>
-    <button onclick="playFmaj7Chord()">Play Fmaj7 Chord</button>
-    <button onclick="playFdiminishedChord()">Play F Diminished Chord</button>
-    <button onclick="playFaugmentedChord()">Play F Augmented Chord</button>
-add
-    <button onclick="playDChord()">Play D Major Chord</button>
-    <button onclick="playEChord()">Play E Major Chord</button>
-    <button onclick="playAChord()">Play A Major Chord</button>
-    <button onclick="playAmChord()">Play A Minor Chord</button>
-    <button onclick="playFmChord()">Play F Minor Chord</button>
-    <button onclick="playF7Chord()">Play F7 Chord</button>
-    <button onclick="playFm7Chord()">Play Fm7 Chord</button>
-    <button onclick="playA7Chord()">Play A7 Chord</button>
-    <button onclick="playBChord()">Play B Major Chord</button>
-    <button onclick="playCmChord()">Play C Minor Chord</button>
-    <button onclick="playDmChord()">Play D Minor Chord</button>
-    <button onclick="playEmChord()">Play E Minor Chord</button>
-    <button onclick="playE7Chord()">Play E7 Chord</button>
-    <button onclick="playGmChord()">Play G Minor Chord</button>
-    <button onclick="playGmChord()">Play G Minor Chord</button>
-    <button onclick="playD7Chord()">Play D7 Chord</button>
+    <button onclick="playCChord()">C Major</button>
+    <button onclick="playDChord()">D Major</button>
+    <button onclick="playGChord()">G Major</button>
+    <button onclick="playGChord()">G Major</button>
+    <button onclick="playFChord()">F Major</button>
+    <button onclick="playDChord()">D Major</button>
+    <button onclick="playEChord()">E Major</button>
+    <button onclick="playAChord()">A Major</button>
+    <button onclick="playAmChord()">A Minor</button>
+    <button onclick="playA7Chord()">A7</button>
+    <button onclick="playBChord()">B Major</button>
+    <button onclick="playCmChord()">C Minor</button>
+    <button onclick="playDmChord()">D Minor</button>
+<!--    <button onclick="playEmChord()">E Minor</button>-->
+<!--    <button onclick="playE7Chord()">E7</button>-->
+    <button onclick="playGmChord()">G Minor</button>
+    <button onclick="playGmChord()">G Minor</button>
+<!--    <button onclick="playD7Chord()">D7</button>-->
 </div>
 <script>
     // Initialize Audio Context
@@ -188,71 +178,71 @@ add
         playChord(selectedInstrument, audioContext, [gFrequency, bFrequency, dFrequency], chordDuration);
     }
 
-function playFChord() {
-    const fFrequency = 174.61; // F3
-    const aFrequency = 220.00; // A3
-    const cFrequency = 261.63; // C4
-    const chordDuration = 2;
-    const selectedInstrument = document.getElementById("instrument").value;
-    playChord(selectedInstrument, audioContext, [fFrequency, aFrequency, cFrequency], chordDuration);
-}
+    function playFChord() {
+        const fFrequency = 174.61; // F3
+        const aFrequency = 220.00; // A3
+        const cFrequency = 261.63; // C4
+        const chordDuration = 2;
+        const selectedInstrument = document.getElementById("instrument").value;
+        playChord(selectedInstrument, audioContext, [fFrequency, aFrequency, cFrequency], chordDuration);
+    }
 
-function playFmChord() {
-    const fFrequency = 174.61; // F3
-    const aFlatFrequency = 207.65; // Ab3
-    const cFrequency = 261.63; // C4
-    const chordDuration = 2;
-    const selectedInstrument = document.getElementById("instrument").value;
-    playChord(selectedInstrument, audioContext, [fFrequency, aFlatFrequency, cFrequency], chordDuration);
-}
+    function playFmChord() {
+        const fFrequency = 174.61; // F3
+        const aFlatFrequency = 207.65; // Ab3
+        const cFrequency = 261.63; // C4
+        const chordDuration = 2;
+        const selectedInstrument = document.getElementById("instrument").value;
+        playChord(selectedInstrument, audioContext, [fFrequency, aFlatFrequency, cFrequency], chordDuration);
+    }
 
-function playF7Chord() {
-    const fFrequency = 174.61; // F3
-    const aFrequency = 220.00; // A3
-    const cFrequency = 261.63; // C4
-    const eFlatFrequency = 311.13; // Eb4
-    const chordDuration = 2;
-    const selectedInstrument = document.getElementById("instrument").value;
-    playChord(selectedInstrument, audioContext, [fFrequency, aFrequency, cFrequency, eFlatFrequency], chordDuration);
-}
+    function playF7Chord() {
+        const fFrequency = 174.61; // F3
+        const aFrequency = 220.00; // A3
+        const cFrequency = 261.63; // C4
+        const eFlatFrequency = 311.13; // Eb4
+        const chordDuration = 2;
+        const selectedInstrument = document.getElementById("instrument").value;
+        playChord(selectedInstrument, audioContext, [fFrequency, aFrequency, cFrequency, eFlatFrequency], chordDuration);
+    }
 
-function playFm7Chord() {
-    const fFrequency = 174.61; // F3
-    const aFlatFrequency = 207.65; // Ab3
-    const cFrequency = 261.63; // C4
-    const eFlatFrequency = 311.13; // Eb4
-    const chordDuration = 2;
-    const selectedInstrument = document.getElementById("instrument").value;
-    playChord(selectedInstrument, audioContext, [fFrequency, aFlatFrequency, cFrequency, eFlatFrequency], chordDuration);
-}
+    function playFm7Chord() {
+        const fFrequency = 174.61; // F3
+        const aFlatFrequency = 207.65; // Ab3
+        const cFrequency = 261.63; // C4
+        const eFlatFrequency = 311.13; // Eb4
+        const chordDuration = 2;
+        const selectedInstrument = document.getElementById("instrument").value;
+        playChord(selectedInstrument, audioContext, [fFrequency, aFlatFrequency, cFrequency, eFlatFrequency], chordDuration);
+    }
 
-function playFmaj7Chord() {
-    const fFrequency = 174.61; // F3
-    const aFrequency = 220.00; // A3
-    const cFrequency = 261.63; // C4
-    const eFrequency = 329.63; // E4
-    const chordDuration = 2;
-    const selectedInstrument = document.getElementById("instrument").value;
-    playChord(selectedInstrument, audioContext, [fFrequency, aFrequency, cFrequency, eFrequency], chordDuration);
-}
+    function playFmaj7Chord() {
+        const fFrequency = 174.61; // F3
+        const aFrequency = 220.00; // A3
+        const cFrequency = 261.63; // C4
+        const eFrequency = 329.63; // E4
+        const chordDuration = 2;
+        const selectedInstrument = document.getElementById("instrument").value;
+        playChord(selectedInstrument, audioContext, [fFrequency, aFrequency, cFrequency, eFrequency], chordDuration);
+    }
 
-function playFdiminishedChord() {
-    const fFrequency = 174.61; // F3
-    const aFlatFrequency = 207.65; // Ab3
-    const bFrequency = 246.94; // B3
-    const chordDuration = 2;
-    const selectedInstrument = document.getElementById("instrument").value;
-    playChord(selectedInstrument, audioContext, [fFrequency, aFlatFrequency, bFrequency], chordDuration);
-}
+    function playFdiminishedChord() {
+        const fFrequency = 174.61; // F3
+        const aFlatFrequency = 207.65; // Ab3
+        const bFrequency = 246.94; // B3
+        const chordDuration = 2;
+        const selectedInstrument = document.getElementById("instrument").value;
+        playChord(selectedInstrument, audioContext, [fFrequency, aFlatFrequency, bFrequency], chordDuration);
+    }
 
-function playFaugmentedChord() {
-    const fFrequency = 174.61; // F3
-    const aFrequency = 220.00; // A3
-    const cSharpFrequency = 277.18; // C#4
-    const chordDuration = 2;
-    const selectedInstrument = document.getElementById("instrument").value;
-    playChord(selectedInstrument, audioContext, [fFrequency, aFrequency, cSharpFrequency], chordDuration);
-}
+    function playFaugmentedChord() {
+        const fFrequency = 174.61; // F3
+        const aFrequency = 220.00; // A3
+        const cSharpFrequency = 277.18; // C#4
+        const chordDuration = 2;
+        const selectedInstrument = document.getElementById("instrument").value;
+        playChord(selectedInstrument, audioContext, [fFrequency, aFrequency, cSharpFrequency], chordDuration);
+    }
 
     function playDChord() {
         const dFrequency = 293.66; // D4
@@ -299,6 +289,15 @@ function playFaugmentedChord() {
         playChord(selectedInstrument, audioContext, [aFrequency, cSharpFrequency, eFrequency], chordDuration);
     }
 
+    function playA7Chord() {
+        const aFrequency = 220.00; // A3
+        const cSharpFrequency = 277.18; // C#4
+        const eFrequency = 329.63; // E4
+        const gFrequency = 392.00; // G4
+        const chordDuration = 2; // 2 seconds
+        const selectedInstrument = document.getElementById("instrument").value;
+        playChord(selectedInstrument, audioContext, [aFrequency, cSharpFrequency, eFrequency, gFrequency], chordDuration);
+    }
 
     function playCmChord() {
         const cFrequency = 261.63; // C4
