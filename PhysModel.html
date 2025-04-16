@@ -5,8 +5,17 @@
         function playSynth(note) {
             const frequencies = {
                 A: 220.0,  // Frequency for A
+                "A#": 233.08, // Frequency for A#
                 B: 246.94, // Frequency for B
-                C: 261.63  // Frequency for C
+                C: 261.63,  // Frequency for C
+                "C#": 277.18, // Frequency for C#
+                D: 293.66,  // Frequency for D
+                "D#": 311.13, // Frequency for D#
+                E: 329.63,  // Frequency for E
+                F: 349.23,  // Frequency for F
+                "F#": 369.99, // Frequency for F#
+                G: 392.00,   // Frequency for G
+                "G#": 415.30  // Frequency for G#
             };
             const frequency = frequencies[note] || 220.0; // Fallback to A if note is invalid
             const selectedInstrument = document.getElementById("instrument").value;
@@ -25,6 +34,10 @@
             text-align: center;
             margin: 0;
             padding: 20px;
+        }
+
+        button {
+            transition: none;
         }
 
         h1 {
@@ -59,29 +72,79 @@
         <option value="marimba">Marimba</option>
     </select>
 </div>
+<div style="position: relative; width: 420px; height: 200px; margin: auto;">
+    <div style="display: flex; position: absolute; bottom: 0; left: 0; right: 0; gap: 5px;">
+<button style="width: 37.5px; height: 90px; background: white; color: black; position: relative;"
+                onclick="playSynth('C')">C &#9833;
+        </button>
+<button style="width: 37.5px; height: 90px; background: white; color: black; position: relative;"
+                onclick="playSynth('D')">D &#9834;
+        </button>
+<button style="width: 37.5px; height: 90px; background: white; color: black; position: relative;"
+                onclick="playSynth('E')">E &#9835;
+        </button>
+<button style="width: 37.5px; height: 90px; background: white; color: black; position: relative;"
+                onclick="playSynth('F')">F &#9836;
+        </button>
+<button style="width: 37.5px; height: 90px; background: white; color: black; position: relative;"
+                onclick="playSynth('G')">G &#9837;
+        </button>
+<button style="width: 37.5px; height: 90px; background: white; color: black; position: relative;"
+                onclick="playSynth('A')">A &#9838;
+        </button>
+<button style="width: 37.5px; height: 90px; background: white; color: black; position: relative;"
+                onclick="playSynth('B')">B
+        </button>
+    </div>
+    <div style="display: flex; position: absolute; bottom: 80px; left: 28px; gap: 10px;">
+<button style="width: 18.75px; height: 60px; background: black; color: white; z-index: 1;"
+                onclick="playSynth('C#')">C#
+        </button>
+<button style="width: 18.75px; height: 60px; background: black; color: white; z-index: 1; margin-left: 25.5px;"
+                onclick="playSynth('D#')">D#
+        </button>
+        <div style="flex: 1;"></div>
+<button style="width: 18.75px; height: 60px; background: black; color: white; z-index: 1;"
+                onclick="playSynth('F#')">F#
+        </button>
+<button style="width: 18.75px; height: 60px; background: black; color: white; z-index: 1; margin-left: 25.5px;"
+                onclick="playSynth('G#')">G#
+        </button>
+<button style="width: 18.75px; height: 60px; background: black; color: white; z-index: 1; margin-left: 25.5px;"
+                onclick="playSynth('A#')">A#
+        </button>
+    </div>
+</div>
 <div>
-    <button onclick="playSynth('A')">A</button>
-    <button onclick="playSynth('B')">B</button>
-    <button onclick="playSynth('C')">C</button>
+    <button onclick="playCChord()">C Major (C–E–G)</button>
+
+    <button onclick="playDChord()">D Major (D–F#–A)</button>
+
+    <button onclick="playEChord()">E Major (E–G#–B)</button>
+
+    <button onclick="playFChord()">F Major (F–A–C)</button>
+
+    <button onclick="playGChord()">G Major (G–B–D)</button>
+
+    <button onclick="playAChord()">A Major (A–C#–E)</button>
+
+    <button onclick="playBChord()">B Major (B–D#–F#)</button>
     <hr/>
-    <button onclick="playCChord()">C Major</button>
-    <button onclick="playDChord()">D Major</button>
-    <button onclick="playGChord()">G Major</button>
-    <button onclick="playGChord()">G Major</button>
-    <button onclick="playFChord()">F Major</button>
-    <button onclick="playDChord()">D Major</button>
-    <button onclick="playEChord()">E Major</button>
-    <button onclick="playAChord()">A Major</button>
-    <button onclick="playAmChord()">A Minor</button>
-    <button onclick="playA7Chord()">A7</button>
-    <button onclick="playBChord()">B Major</button>
-    <button onclick="playCmChord()">C Minor</button>
-    <button onclick="playDmChord()">D Minor</button>
-<!--    <button onclick="playEmChord()">E Minor</button>-->
-<!--    <button onclick="playE7Chord()">E7</button>-->
-    <button onclick="playGmChord()">G Minor</button>
-    <button onclick="playGmChord()">G Minor</button>
-<!--    <button onclick="playD7Chord()">D7</button>-->
+    <button onclick="playCmChord()">C Minor (C–D#–G)</button>
+
+    <button onclick="playDmChord()">D Minor (D–F–A)</button>
+
+    <button onclick="playEmChord()">E Minor (E–G–B)</button>
+
+    <button onclick="playFmChord()">F Minor (F–G#–C)</button>
+
+    <button onclick="playGmChord()">G Minor (G–A#–D)</button>
+
+    <button onclick="playAmChord()">A Minor (A–C–E)</button>
+
+    <button onclick="playBmChord()">B Minor (B–D–F#)</button>
+    <hr/>
+    <button onclick="playA7Chord()">A7 (A–C#–E–G)</button>
 </div>
 <script>
     // Initialize Audio Context
@@ -319,6 +382,23 @@
         playChord(selectedInstrument, audioContext, [eFrequency, gFrequency, bFrequency], chordDuration);
     }
 
+    function playBmChord() {
+        const bFrequency = 246.94; // B3
+        const dFrequency = 293.66; // D4
+        const fSharpFrequency = 369.99; // F#4
+        const chordDuration = 2; // 2 seconds
+        const selectedInstrument = document.getElementById("instrument").value;
+        playChord(selectedInstrument, audioContext, [bFrequency, dFrequency, fSharpFrequency], chordDuration);
+    }
+
+    function playEmChord() {
+        const eFrequency = 329.63; // E4
+        const gFrequency = 392.00; // G4
+        const bFrequency = 246.94; // B3
+        const chordDuration = 2; // 2 seconds
+        const selectedInstrument = document.getElementById("instrument").value;
+        playChord(selectedInstrument, audioContext, [eFrequency, gFrequency, bFrequency], chordDuration);
+    }
 
     function playCMChord() {
         const cFrequency = 261.63; // C4
@@ -336,6 +416,15 @@
         const chordDuration = 2; // 2 seconds
         const selectedInstrument = document.getElementById("instrument").value;
         playChord(selectedInstrument, audioContext, [aFrequency, cFrequency, eFrequency], chordDuration);
+    }
+
+    function playCmChord() {
+        const cFrequency = 261.63; // C4
+        const dSharpFrequency = 311.13; // D#4
+        const gFrequency = 392.00; // G4
+        const chordDuration = 2; // 2 seconds
+        const selectedInstrument = document.getElementById("instrument").value;
+        playChord(selectedInstrument, audioContext, [cFrequency, dSharpFrequency, gFrequency], chordDuration);
     }
 
     function guitarSound(ctx, frequency, duration) {
