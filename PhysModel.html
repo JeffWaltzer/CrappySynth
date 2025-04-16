@@ -14,10 +14,12 @@
                 fluteSound(audioContext, frequency, 2); // Play flute for 2 seconds
             } else if (selectedInstrument === "tubularBell") {
                 tubularBellSound(audioContext, frequency, 2); // Play tubular bell for 2 seconds
+            } else if (selectedInstrument === "marimba") {
+                marimbaSound(audioContext, frequency, 2); // Play marimba for 2 seconds
             } else if (selectedInstrument === "guitar") {
                 guitarSound(audioContext, frequency, 2); // Play guitar for 2 seconds
             }
-        };
+        }
 
     </script>
     <meta charset="UTF-8">
@@ -61,6 +63,7 @@
         <option value="flute">Flute</option>
         <option value="tubularBell">Tubular Bell</option>
         <option value="guitar">Guitar</option>
+        <option value="marimba">Marimba</option>
     </select>
 </div>
 <div>
@@ -103,30 +106,45 @@
     function tubularBellSound(ctx, frequency, duration) {
         const oscillator = ctx.createOscillator();
         const secondOscillator = ctx.createOscillator(); // Add a secondary oscillator for depth
+        const thirdOscillator = ctx.createOscillator(); // Add a third oscillator for more resonance
+        const detuneOscillator = ctx.createOscillator(); // Detuned oscillator for additional harmonics
 
-        oscillator.type = "sine"; // Basic sine wave for tubular bell
-        oscillator.frequency.setValueAtTime(frequency, ctx.currentTime);
-        secondOscillator.type = "sine";
-        secondOscillator.frequency.setValueAtTime(frequency * 1.5, ctx.currentTime); // Slightly higher pitch for harmonics
-        oscillator.frequency.exponentialRampToValueAtTime(frequency * 0.99, ctx.currentTime + 0.5); // Subtle frequency drop for realism
+        oscillator.type = "triangle"; // Use triangle wave for smoother tone
+        oscillator.frequency.setValueAtTime(frequency * 0.9, ctx.currentTime); // Lower pitch for depth
+        secondOscillator.type = "triangle";
+        secondOscillator.frequency.setValueAtTime(frequency * 1.3, ctx.currentTime); // Moderate harmonic
+        thirdOscillator.type = "sine"; // Use sine for richer resonance
+        thirdOscillator.frequency.setValueAtTime(frequency * 1.8, ctx.currentTime); // Add a lower harmonic
+        detuneOscillator.type = "triangle";
+        detuneOscillator.frequency.setValueAtTime(frequency * 0.95, ctx.currentTime); // More subtle detuning
+
+        oscillator.frequency.exponentialRampToValueAtTime(frequency * 0.88, ctx.currentTime + 0.8); // Larger drop for warmth
+        thirdOscillator.frequency.exponentialRampToValueAtTime(frequency * 1.6, ctx.currentTime + 0.8); // Match ramp for mellow resonance
+        detuneOscillator.frequency.exponentialRampToValueAtTime(frequency * 0.92, ctx.currentTime + 0.9); // Softer detuned ramp
 
         // Amplitude Envelope
         const gain = ctx.createGain();
         gain.gain.setValueAtTime(0, ctx.currentTime);
-        gain.gain.linearRampToValueAtTime(1.1, ctx.currentTime + 0.1); // Quick attack
-        gain.gain.exponentialRampToValueAtTime(0.2, ctx.currentTime + duration - 0.3); // Decay
-        gain.gain.linearRampToValueAtTime(0.0, ctx.currentTime + duration); // Release
+        gain.gain.linearRampToValueAtTime(0.7, ctx.currentTime + 0.2); // Softer attack
+        gain.gain.exponentialRampToValueAtTime(0.3, ctx.currentTime + duration - 0.5); // Milder decay
+        gain.gain.linearRampToValueAtTime(0.0, ctx.currentTime + duration + 0.2); // Slightly longer release
 
         oscillator.connect(gain);
         secondOscillator.connect(gain); // Connect secondary oscillator
+        thirdOscillator.connect(gain); // Connect third oscillator
+        detuneOscillator.connect(gain); // Connect detuned oscillator
         gain.connect(ctx.destination);
 
         oscillator.start();
         secondOscillator.start(); // Start second oscillator
+        thirdOscillator.start(); // Start third oscillator
+        detuneOscillator.start(); // Start detuned oscillator
         oscillator.stop(ctx.currentTime + duration); // Stop after specified duration
         secondOscillator.stop(ctx.currentTime + duration); // Stop second oscillator
+        thirdOscillator.stop(ctx.currentTime + duration); // Stop third oscillator
+        detuneOscillator.stop(ctx.currentTime + duration); // Stop detuned oscillator
     }
-    
+
 
     // Function to Play a Note
     // Guitar Sound Generation
@@ -175,6 +193,33 @@
         }
         return curve;
     }
+
+    // Marimba Sound Generation
+    function marimbaSound(ctx, frequency, duration) {
+        const oscillator = ctx.createOscillator();
+        oscillator.type = "square"; // Square wave for percussive tone
+        oscillator.frequency.setValueAtTime(frequency, ctx.currentTime);
+
+        // Amplitude Envelope
+        const gain = ctx.createGain();
+        gain.gain.setValueAtTime(0, ctx.currentTime);
+        gain.gain.linearRampToValueAtTime(1.2, ctx.currentTime + 0.02); // Quick attack for percussive sound
+        gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + duration); // Rapid decay for short marimba notes
+
+        // Filter for marimba tone shaping
+        const bandpass = ctx.createBiquadFilter();
+        bandpass.type = "bandpass";
+        bandpass.frequency.setValueAtTime(frequency, ctx.currentTime);
+        bandpass.Q.setValueAtTime(8, ctx.currentTime); // Moderate quality for defined tone
+
+        oscillator.connect(bandpass);
+        bandpass.connect(gain);
+        gain.connect(ctx.destination);
+
+        oscillator.start();
+        oscillator.stop(ctx.currentTime + duration); // Stop after the specified duration
+    }
+
 </script>
 </body>
 </html>
