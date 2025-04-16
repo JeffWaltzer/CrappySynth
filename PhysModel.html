@@ -72,21 +72,27 @@
     // Initialize Audio Context
     const audioContext = new (window.AudioContext || window.webkitAudioContext)();
 
-    // Flute Sound Generation using Sine Wave
+    // Flute Sound Generation with Resonance and Sine Wave
     function fluteSound(ctx, frequency, duration) {
         const oscillator = ctx.createOscillator();
         oscillator.type = "sine"; // Sine wave for smooth flute sound
+        oscillator.detune.value = -10; // Slight detune for organic texture
         oscillator.frequency.setValueAtTime(frequency, ctx.currentTime);
+        const bandpass = ctx.createBiquadFilter(); // Add resonance with bandpass filter
+        bandpass.type = "bandpass";
+        bandpass.frequency.setValueAtTime(frequency, ctx.currentTime);
+        bandpass.Q.setValueAtTime(12, ctx.currentTime); // Set quality factor for resonance
 
         // Amplitude Envelope
         const gain = ctx.createGain();
         gain.gain.setValueAtTime(0, ctx.currentTime);
         gain.gain.linearRampToValueAtTime(0.8, ctx.currentTime + 0.1); // Attack
-        gain.gain.exponentialRampToValueAtTime(0.6, ctx.currentTime + 0.3); // Decay
+        gain.gain.exponentialRampToValueAtTime(0.7, ctx.currentTime + 0.4); // Decay
         gain.gain.setValueAtTime(0.6, ctx.currentTime + duration - 0.2); // Sustain
-        gain.gain.linearRampToValueAtTime(0.0, ctx.currentTime + duration); // Release
+        gain.gain.linearRampToValueAtTime(0.0, ctx.currentTime + duration + 0.05); // Release
 
-        oscillator.connect(gain);
+        oscillator.connect(bandpass); // Connect oscillator to bandpass filter
+        bandpass.connect(gain); // Connect bandpass filter to gain
         gain.connect(ctx.destination);
 
         oscillator.start();
@@ -96,22 +102,29 @@
     // Tubular Bell Sound Generation
     function tubularBellSound(ctx, frequency, duration) {
         const oscillator = ctx.createOscillator();
+        const secondOscillator = ctx.createOscillator(); // Add a secondary oscillator for depth
+
         oscillator.type = "sine"; // Basic sine wave for tubular bell
         oscillator.frequency.setValueAtTime(frequency, ctx.currentTime);
+        secondOscillator.type = "sine";
+        secondOscillator.frequency.setValueAtTime(frequency * 1.5, ctx.currentTime); // Slightly higher pitch for harmonics
         oscillator.frequency.exponentialRampToValueAtTime(frequency * 0.99, ctx.currentTime + 0.5); // Subtle frequency drop for realism
 
         // Amplitude Envelope
         const gain = ctx.createGain();
         gain.gain.setValueAtTime(0, ctx.currentTime);
-        gain.gain.linearRampToValueAtTime(1.0, ctx.currentTime + 0.05); // Quick attack
+        gain.gain.linearRampToValueAtTime(1.1, ctx.currentTime + 0.1); // Quick attack
         gain.gain.exponentialRampToValueAtTime(0.2, ctx.currentTime + duration - 0.3); // Decay
         gain.gain.linearRampToValueAtTime(0.0, ctx.currentTime + duration); // Release
 
         oscillator.connect(gain);
+        secondOscillator.connect(gain); // Connect secondary oscillator
         gain.connect(ctx.destination);
 
         oscillator.start();
+        secondOscillator.start(); // Start second oscillator
         oscillator.stop(ctx.currentTime + duration); // Stop after specified duration
+        secondOscillator.stop(ctx.currentTime + duration); // Stop second oscillator
     }
     
 
@@ -119,30 +132,49 @@
     // Guitar Sound Generation
     function guitarSound(ctx, frequency, duration) {
         const oscillator = ctx.createOscillator();
-        oscillator.type = "triangle"; // Triangle wave for guitar-like sound
+        oscillator.type = "sawtooth"; // Sawtooth wave for more realistic harmonics
         oscillator.frequency.setValueAtTime(frequency, ctx.currentTime);
-
-        // Amplitude Envelope
         const gain = ctx.createGain();
         gain.gain.setValueAtTime(0, ctx.currentTime);
-        gain.gain.linearRampToValueAtTime(1.0, ctx.currentTime + 0.02); // Attack
-        gain.gain.exponentialRampToValueAtTime(0.5, ctx.currentTime + 0.1); // Decay
-        gain.gain.setValueAtTime(0.5, ctx.currentTime + duration - 0.2); // Sustain
-        gain.gain.linearRampToValueAtTime(0.0, ctx.currentTime + duration); // Release
+        gain.gain.linearRampToValueAtTime(1.0, ctx.currentTime + 0.02); // Quick attack
+        gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + duration); // Quick decay to mimic pluck
 
-        // Add distortion for realism
-        const distortion = ctx.createWaveShaper();
-        distortion.curve = new Float32Array([0, 1, 0]); // Simple distortion curve
-        distortion.oversample = '4x';
+        // Body resonance effect for pluck
+        const bodyFilter = ctx.createBiquadFilter();
+        bodyFilter.type = "lowpass";
+        bodyFilter.frequency.setValueAtTime(2200, ctx.currentTime); // High frequency for initial brightness
+        bodyFilter.frequency.exponentialRampToValueAtTime(800, ctx.currentTime + duration); // Frequency drop for realism
 
-        oscillator.connect(distortion);
-        distortion.connect(gain);
+        // Physical resonance simulation
+        const resonance = ctx.createConvolver();
+        const impulse = ctx.createBuffer(2, ctx.sampleRate / 2, ctx.sampleRate); // Simulated impulse response
+        const left = impulse.getChannelData(0);
+        const right = impulse.getChannelData(1);
+        for (let i = 0; i < left.length; i++) {
+            left[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / left.length, 2); // Damped random signal
+            right[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / right.length, 2); // Damped random signal
+        }
+        resonance.buffer = impulse;
+
+        oscillator.connect(bodyFilter);
+        bodyFilter.connect(resonance);
+        resonance.connect(gain);
         gain.connect(ctx.destination);
 
         oscillator.start();
         oscillator.stop(ctx.currentTime + duration); // Stop after the specified duration
     }
 
+    function makeDistortionCurve(amount) {
+        const k = typeof amount === 'number' ? amount : 50;
+        const n_samples = 44100, curve = new Float32Array(n_samples);
+        const deg = Math.PI / 180;
+        for (let i = 0; i < n_samples; i++) {
+            const x = (i * 2) / n_samples - 1;
+            curve[i] = ((3 + k) * x * 20 * deg) / (Math.PI + k * Math.abs(x));
+        }
+        return curve;
+    }
 </script>
 </body>
 </html>
