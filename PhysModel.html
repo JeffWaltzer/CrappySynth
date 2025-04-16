@@ -17,20 +17,33 @@
             "G#": 415.30  // Frequency for G#
         };
 
-        function playSynth(input) {
-            console.log('playSynth:', input);
-            let note, frequency;
-            if (typeof input === 'number') { // Check if input is a MIDI note number
-                const midiNumber = input;
-                note = getNoteFromMIDINumber(midiNumber); // Convert MIDI number to note name
-                const octave = Math.floor(midiNumber / 12) - 1; // Calculate octave
-                frequency = 440 * Math.pow(2, (midiNumber - 69) / 12); // Convert MIDI to frequency
-            } else { // If input is a note name
-                note = input;
-                frequency = frequencies[note] || 220.0; // Fallback to A if note is invalid
+
+        function playSound(input) {
+            let frequency;
+            if (Array.isArray(input)) { // Check if input is a chord
+                const chordFrequencies = input.map(note => frequencies[note] || 220.0); // Map notes to frequencies
+                const selectedInstrument = document.getElementById("instrument").value;
+                playChord(selectedInstrument, audioContext, chordFrequencies, 2);
+            } else {
+                frequency = typeof input === 'number' ?
+                    440 * Math.pow(2, (input - 69) / 12) :
+                    frequencies[input];
+                const selectedInstrument = document.getElementById("instrument").value;
+                instruments[selectedInstrument](audioContext, frequency, 2);
             }
-            const selectedInstrument = document.getElementById("instrument").value;
-            playInstrument(selectedInstrument, audioContext, frequency, 2);
+        }
+
+        function playChord(instrument, ctx, frequencies) {
+            const normalizedGain = 1 / Math.sqrt(frequencies.length); // Normalize combined amplitude
+            var normalizedDuration = 1;
+            frequencies.forEach((freq) => {
+                const instrumentSound = () => instruments[instrument](ctx, freq, normalizedDuration);
+                const gainNode = ctx.createGain();
+                gainNode.gain.setValueAtTime(normalizedGain, ctx.currentTime);
+                gainNode.gain.linearRampToValueAtTime(normalizedGain, ctx.currentTime + normalizedDuration);
+                gainNode.connect(ctx.destination);
+                instrumentSound();
+            });
         }
 
     </script>
@@ -94,66 +107,66 @@
 <div style="position: relative; width: 420px; height: 200px; margin: auto;">
     <div style="display: flex; position: absolute; bottom: 0; left: 0; right: 0; gap: 5px;">
         <button style="width: 37.5px; height: 90px; background: white; color: black; position: relative;"
-                onclick="playSynth('C')">C &#9833;
+                onclick="playSound('C')">C &#9833;
         </button>
         <button style="width: 37.5px; height: 90px; background: white; color: black; position: relative;"
-                onclick="playSynth('D')">D &#9834;
+                onclick="playSound('D')">D &#9834;
         </button>
         <button style="width: 37.5px; height: 90px; background: white; color: black; position: relative;"
-                onclick="playSynth('E')">E &#9835;
+                onclick="playSound('E')">E &#9835;
         </button>
         <button style="width: 37.5px; height: 90px; background: white; color: black; position: relative;"
-                onclick="playSynth('F')">F &#9836;
+                onclick="playSound('F')">F &#9836;
         </button>
         <button style="width: 37.5px; height: 90px; background: white; color: black; position: relative;"
-                onclick="playSynth('G')">G &#9837;
+                onclick="playSound('G')">G &#9837;
         </button>
         <button style="width: 37.5px; height: 90px; background: white; color: black; position: relative;"
-                onclick="playSynth('A')">A &#9838;
+                onclick="playSound('A')">A &#9838;
         </button>
         <button style="width: 37.5px; height: 90px; background: white; color: black; position: relative;"
-                onclick="playSynth('B')">B &#9839;
+                onclick="playSound('B')">B &#9839;
         </button>
     </div>
     <div style="display: flex; position: absolute; bottom: 80px; left: 28px; gap: 10px;">
         <button style="width: 18.75px; height: 60px; background: black; color: white; z-index: 1;"
-                onclick="playSynth('C#')">C#
+                onclick="playSound('C#')">C#
         </button>
         <button style="width: 18.75px; height: 60px; background: black; color: white; z-index: 1; margin-left: 25.5px;"
-                onclick="playSynth('D#')">D#
+                onclick="playSound('D#')">D#
         </button>
         <div style="flex: 1;"></div>
         <button style="width: 18.75px; height: 60px; background: black; color: white; z-index: 1;"
-                onclick="playSynth('F#')">F#
+                onclick="playSound('F#')">F#
         </button>
         <button style="width: 18.75px; height: 60px; background: black; color: white; z-index: 1; margin-left: 25.5px;"
-                onclick="playSynth('G#')">G#
+                onclick="playSound('G#')">G#
         </button>
         <button style="width: 18.75px; height: 60px; background: black; color: white; z-index: 1; margin-left: 25.5px;"
-                onclick="playSynth('A#')">A#
+                onclick="playSound('A#')">A#
         </button>
     </div>
 </div>
 <div>
-    <button onclick="playCChord()">C Major (C–E–G)</button>
+    <button onclick="playSound(['C', 'E', 'G'])">C Major (C–E–G)</button>
 
-    <button onclick="playDChord()">D Major (D–F#–A)</button>
+    <button onclick="playSound(['D', 'F#', 'A'])">D Major (D–F#–A)</button>
 
-    <button onclick="playEChord()">E Major (E–G#–B)</button>
+    <button onclick="playSound(['E', 'G#', 'B'])">E Major (E–G#–B)</button>
 
-    <button onclick="playFChord()">F Major (F–A–C)</button>
+    <button onclick="playSound(['F', 'A', 'C'])">F Major (F–A–C)</button>
 
-    <button onclick="playGChord()">G Major (G–B–D)</button>
+    <button onclick="playSound(['G', 'B', 'D'])">G Major (G–B–D)</button>
 
-    <button onclick="playAChord()">A Major (A–C#–E)</button>
+    <button onclick="playSound(['A', 'C#', 'E'])">A Major (A–C#–E)</button>
 
-    <button onclick="playBChord()">B Major (B–D#–F#)</button>
+    <button onclick="playSound(['B', 'D#', 'F#'])">B Major (B–D#–F#)</button>
     <hr/>
     <button onclick="playCmChord()">C Minor (C–D#–G)</button>
-
+    <button onclick="playSound(['D', 'F', 'A'])">D Minor (D–F–A)</button>
     <button onclick="playDmChord()">D Minor (D–F–A)</button>
 
-    <button onclick="playEmChord()">E Minor (E–G–B)</button>
+    <button onclick="playSound(['E', 'G', 'B'])">E Minor (E–G–B)</button>
 
     <button onclick="playFmChord()">F Minor (F–G#–C)</button>
 
@@ -164,11 +177,21 @@
     <button onclick="playBmChord()">B Minor (B–D–F#)</button>
     <hr/>
     <button onclick="playA7Chord()">A7 (A–C#–E–G)</button>
-    <button onclick="playF7Chord()">F7 (F–A–C–Eb)</button>
+    <button onclick="playSound(['F', 'A', 'C', 'Eb'])">F7 (F–A–C–Eb)</button>
     <button onclick="playFmaj7Chord()">Fmaj7 (F–A–C–E)</button>
     <button onclick="playAm7Chord()">Am7 (A–C–E–G)</button>
 </div>
 <script>
+    const instruments = {
+        flute: fluteSound,
+        tubularBell: tubularBellSound,
+        marimba: marimbaSound,
+        guitar: guitarSound,
+        grandPiano: enhancedPianoSound,
+        violin: violinSound,
+    };
+
+
     // Initialize Audio Context
     if (navigator.requestMIDIAccess) {
         navigator.requestMIDIAccess().then(initMIDI, onMIDIFailure);
@@ -188,22 +211,12 @@
         alert("Failed to access MIDI devices.");
     }
 
-    function getNoteFromMIDINumber(note) {
-        const notes = [
-            "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"
-        ];
-        return notes[note % 12];
-    }
-
     function handleMIDIMessage(message) {
-        console.dir(message);
-        const [status, data1, data2] = message.data;
-        const command = status >> 4;
-        const note = data1;
-        const velocity = data2;
+        const command = message.data[0] >> 4;
+        const note = message.data[1];
 
-        if (command === 9 && velocity > 0) {
-            playSynth(note);
+        if (command === 9) {
+            playSound(note);
         }
     }
 
@@ -220,18 +233,6 @@
 
     const audioContext = new (window.AudioContext || window.webkitAudioContext)({sampleRate: 48000});
     const availableOutputs = new Map();
-
-    function sendMIDINoteOn(output, noteNumber, velocity = 127) {
-        const noteOnMessage = [0x90, noteNumber, velocity];
-        console.log(noteOnMessage);
-        output.send(noteOnMessage);
-    }
-
-    function sendMIDINoteOff(output, noteNumber) {
-        const noteOffMessage = [0x80, noteNumber, 0];
-        output.send(noteOffMessage);
-        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-    }
 
     // Flute Sound Generation with Resonance and Sine Wave
     function fluteSound(ctx, frequency, duration) {
@@ -414,16 +415,6 @@
         playChord(selectedInstrument, audioContext, [fFrequency, aFrequency, cFrequency, eFlatFrequency], chordDuration);
     }
 
-
-    function playGmChord() {
-        const eFrequency = 164.81; // E3
-        const gFrequency = 196.00; // G3
-        const bFrequency = 246.94; // B3
-        const chordDuration = 2; // 2 seconds
-        const selectedInstrument = document.getElementById("instrument").value;
-        playChord(selectedInstrument, audioContext, [eFrequency, gFrequency, bFrequency], chordDuration);
-    }
-
     function playBmChord() {
         const bFrequency = 246.94; // B3
         const dFrequency = 293.66; // D4
@@ -500,40 +491,6 @@
         detunedOscillator.stop(ctx.currentTime + duration); // Stop detuned oscillator
     }
 
-
-    function playInstrument(instrument, ctx, frequency, duration) {
-        const instruments = {
-            flute: fluteSound,
-            tubularBell: tubularBellSound,
-            marimba: marimbaSound,
-            guitar: guitarSound,
-            grandPiano: enhancedPianoSound,
-            violin: violinSound,
-        };
-        const playFn = instruments[instrument];
-        if (playFn) {
-            playFn(ctx, frequency, duration);
-        }
-    }
-
-    function adjustGainForChord(playFn, gain, duration, ctx) {
-        const gainNode = ctx.createGain();
-        gainNode.gain.setValueAtTime(gain, ctx.currentTime);
-        gainNode.gain.linearRampToValueAtTime(gain, ctx.currentTime + duration);
-        gainNode.connect(ctx.destination);
-        playFn();
-    }
-
-    function playChord(instrument, ctx, frequencies, duration) {
-        const normalizedGain = 1 / Math.sqrt(frequencies.length); // Normalize combined amplitude
-        var normalizedDuration = 2;
-        frequencies.forEach((freq) => {
-            const instrumentSound = () => playInstrument(instrument, ctx, freq, normalizedDuration);
-            adjustGainForChord(instrumentSound, normalizedGain, normalizedDuration, ctx);
-        });
-
-        frequencies.forEach((freq) => playInstrument(instrument, ctx, freq, normalizedDuration));
-    }
 
     function createOscillator(ctx, type, frequency, detune = 0) {
         const oscillator = ctx.createOscillator();
