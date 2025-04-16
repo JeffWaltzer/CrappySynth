@@ -1,251 +1,119 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <script>
+        function playSynth(note) {
+            const frequencies = {
+                A: 220.0,  // Frequency for A
+                B: 246.94, // Frequency for B
+                C: 261.63  // Frequency for C
+            };
+            const frequency = frequencies[note] || 220.0; // Fallback to A if note is invalid
+            const selectedInstrument = document.getElementById("instrument").value;
+            if (selectedInstrument === "flute") {
+                fluteSound(audioContext, frequency, 2); // Play flute for 2 seconds
+            } else if (selectedInstrument === "tubularBell") {
+                tubularBellSound(audioContext, frequency, 2); // Play tubular bell for 2 seconds
+            }
+            fluteSound(audioContext, frequency, 2); // Play for 2 seconds
+        };
+
+    </script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Web Synthesizer</title>
+    <title>Physical Modeling Synthesizer</title>
     <style>
         body {
             font-family: Arial, sans-serif;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: 100vh;
+            background-color: #282c34;
+            color: white;
+            text-align: center;
             margin: 0;
-            background: #1a1a1a;
+            padding: 20px;
+        }
+
+        h1 {
+            margin-bottom: 30px;
+        }
+
+        button {
+            padding: 15px 30px;
+            margin: 10px;
+            font-size: 18px;
             color: white;
-        }
-
-        .keyboard {
-            display: grid;
-            grid-template-columns: repeat(12, 50px);
-            gap: 5px;
-            justify-content: center;
-            margin-top: 20px;
-        }
-
-        .key {
-            width: 50px;
-            height: 150px;
-            background: white;
-            border: 1px solid black;
-            border-radius: 5px;
-            display: flex;
-            align-items: flex-end;
-            justify-content: center;
-            color: black;
-            font-size: 12px;
+            background-color: #61dafb;
+            border: none;
             cursor: pointer;
-            position: relative;
+            border-radius: 5px;
         }
 
-        .key:active {
-            background: #ddd;
-        }
-
-        .sharp {
-            background: black;
-            height: 100px;
-            color: white;
-            border: 1px solid black;
-            position: absolute;
-            top: 0;
-            left: 35px;
-            width: 30px;
-            z-index: 1;
-        }
-
-        .sharp:active {
-            background: #444;
+        button:hover {
+            background-color: #21a1f1;
         }
     </style>
 </head>
 <body>
-<h1>Web Synthesizer</h1>
-<label for="waveType">Waveform:</label>
-<select id="synthType">
-    <option value="subtractive">Subtractive</option>
-    <option value="physical">Physical Modeling</option>
-</select>
-<label for="waveType">Waveform:</label>
-<select id="waveType">
-    <option value="sine">Sine</option>
-    <option value="square">Square</option>
-    <option value="triangle">Triangle</option>
-    <option value="sawtooth">Sawtooth</option>
-</select>
-
-<div class="keyboard">
-    <!-- White keys -->
-    <div class="key" data-note="C4">C</div>
-    <div class="key" data-note="D4">D</div>
-    <div class="key" data-note="E4">E</div>
-    <div class="key" data-note="F4">F</div>
-    <div class="key" data-note="G4">G</div>
-    <div class="key" data-note="A4">A</div>
-    <div class="key" data-note="B4">B</div>
-    <div class="key" data-note="C5">C</div>
-    <div class="key" data-note="D5">D</div>
-    <div class="key" data-note="E5">E</div>
-    <div class="key" data-note="F5">F</div>
-    <div class="key" data-note="G5">G</div>
-
-    <!-- Black keys -->
-    <div class="sharp" data-note="C#4"></div>
-    <div class="sharp" data-note="D#4"></div>
-    <div style="grid-column-start: 4;"></div>
-    <div class="sharp" data-note="F#4"></div>
-    <div class="sharp" data-note="G#4"></div>
-    <div class="sharp" data-note="A#4"></div>
-    <div style="grid-column-start: 8;"></div>
-    <div class="sharp" data-note="C#5"></div>
-    <div class="sharp" data-note="D#5"></div>
-
-<div id="physicalModelingOptions" style="display: none; margin-top: 20px;">
-    <label for="instrumentType">Instrument:</label>
-    <select id="instrumentType">
-        <option value="plucked">Plucked Strings</option>
-        <option value="wind">Wind Instrument</option>
+<h1>Physical Modeling Synthesizer</h1>
+<div>
+    <label for="instrument">Select Instrument:</label>
+    <select id="instrument">
+        <option value="flute">Flute</option>
+        <option value="tubularBell">Tubular Bell</option>
     </select>
 </div>
+<div>
+    <button onclick="playSynth('A')">Play A</button>
+    <button onclick="playSynth('B')">Play B</button>
+    <button onclick="playSynth('C')">Play C</button>
 </div>
-
 <script>
-    // Web Audio API setup
-    let physicalSynth;
+    // Initialize Audio Context
     const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-    let oscillator;
-    let gainNode = audioContext.createGain();
-    gainNode.gain.setValueAtTime(0.5, audioContext.currentTime); // Set default volume
-    gainNode.connect(audioContext.destination);
 
-    // Note frequencies (equal temperament tuning)
-    const noteFrequencies = {
-        C4: 261.63, "C#4": 277.18, D4: 293.66, "D#4": 311.13, E4: 329.63, F4: 349.23,
-        "F#4": 369.99, G4: 392.00, "G#4": 415.30, A4: 440.00, "A#4": 466.16, B4: 493.88,
-        C5: 523.25, "C#5": 554.37, D5: 587.33, "D#5": 622.25, E5: 659.26, F5: 698.46,
-        "F#5": 739.99, G5: 783.99
-    };
+    // Flute Sound Generation using Sine Wave
+    function fluteSound(ctx, frequency, duration) {
+        const oscillator = ctx.createOscillator();
+        oscillator.type = "sine"; // Sine wave for smooth flute sound
+        oscillator.frequency.setValueAtTime(frequency, ctx.currentTime);
 
-    // Play a note
-function playPhysicalSynth(note, instrument) {
-    if (instrument === "plucked") {
-        const frequency = noteFrequencies[note];
-        const sampleRate = audioContext.sampleRate;
-        const bufferSize = Math.floor(sampleRate / frequency);
-        const decayFactor = 0.997; // Decay rate for the Karplus-Strong
+        // Amplitude Envelope
+        const gain = ctx.createGain();
+        gain.gain.setValueAtTime(0, ctx.currentTime);
+        gain.gain.linearRampToValueAtTime(0.8, ctx.currentTime + 0.1); // Attack
+        gain.gain.exponentialRampToValueAtTime(0.6, ctx.currentTime + 0.3); // Decay
+        gain.gain.setValueAtTime(0.6, ctx.currentTime + duration - 0.2); // Sustain
+        gain.gain.linearRampToValueAtTime(0.0, ctx.currentTime + duration); // Release
 
-        const buffer = new Float32Array(bufferSize).map(() => Math.random() * 2 - 1);
-        const whiteNoise = audioContext.createBuffer(1, buffer.length, sampleRate);
-        whiteNoise.copyToChannel(buffer, 0);
+        oscillator.connect(gain);
+        gain.connect(ctx.destination);
 
-        const bufferSource = audioContext.createBufferSource();
-        bufferSource.buffer = whiteNoise;
-
-        const lowPassFilter = audioContext.createBiquadFilter();
-        lowPassFilter.type = "lowpass";
-        lowPassFilter.frequency.setValueAtTime(frequency * decayFactor, audioContext.currentTime);
-
-        bufferSource.connect(lowPassFilter);
-        lowPassFilter.connect(gainNode);
-
-        bufferSource.start();
-        console.log(`Plucked string triggered: ${note}`);
-
-        setTimeout(() => bufferSource.stop(), 100);
-    } else if (instrument === "wind") {
-        const frequency = noteFrequencies[note];
-        const baseOscillator = audioContext.createOscillator();
-        const lfoOscillator = audioContext.createOscillator();
-        const lfoGain = audioContext.createGain();
-
-        baseOscillator.type = "sine";
-        baseOscillator.frequency.setValueAtTime(frequency, audioContext.currentTime);
-
-        lfoOscillator.type = "sine";
-        lfoOscillator.frequency.setValueAtTime(5, audioContext.currentTime); // LFO modulates at 5 Hz
-
-        lfoGain.gain.setValueAtTime(10, audioContext.currentTime); // LFO intensity
-
-        lfoOscillator.connect(lfoGain);
-        lfoGain.connect(baseOscillator.frequency);
-        baseOscillator.connect(gainNode);
-
-        baseOscillator.start();
-        lfoOscillator.start();
-
-        console.log(`Wind instrument triggered: ${note}`);
-
-        setTimeout(() => {
-            baseOscillator.stop();
-            lfoOscillator.stop();
-        }, 500); // Wind sound plays for 500ms
-    }
-}
-    function playNote(note, waveType) {
-        const frequency = noteFrequencies[note];
-        oscillator = audioContext.createOscillator();
-        oscillator.type = waveType;
-        oscillator.frequency.setValueAtTime(frequency, audioContext.currentTime);
-        oscillator.connect(gainNode);
         oscillator.start();
+        oscillator.stop(ctx.currentTime + duration); // Stop after the specified duration
     }
 
-    // Stop a note
-    function stopNote() {
-        if (oscillator) {
-            oscillator.stop();
-            oscillator.disconnect();
-        }
+    // Tubular Bell Sound Generation
+    function tubularBellSound(ctx, frequency, duration) {
+        const oscillator = ctx.createOscillator();
+        oscillator.type = "sine"; // Basic sine wave for tubular bell
+        oscillator.frequency.setValueAtTime(frequency, ctx.currentTime);
+        oscillator.frequency.exponentialRampToValueAtTime(frequency * 0.99, ctx.currentTime + 0.5); // Subtle frequency drop for realism
+
+        // Amplitude Envelope
+        const gain = ctx.createGain();
+        gain.gain.setValueAtTime(0, ctx.currentTime);
+        gain.gain.linearRampToValueAtTime(1.0, ctx.currentTime + 0.05); // Quick attack
+        gain.gain.exponentialRampToValueAtTime(0.2, ctx.currentTime + duration - 0.3); // Decay
+        gain.gain.linearRampToValueAtTime(0.0, ctx.currentTime + duration); // Release
+
+        oscillator.connect(gain);
+        gain.connect(ctx.destination);
+
+        oscillator.start();
+        oscillator.stop(ctx.currentTime + duration); // Stop after specified duration
     }
 
-    // Handle key press
-    const synthTypeSelect = document.getElementById("synthType");
-    const physicalModelingOptions = document.getElementById("physicalModelingOptions");
-    synthTypeSelect.addEventListener("change", () => {
-        const synthType = synthTypeSelect.value;
-        physicalModelingOptions.style.display = synthType === "physical" ? "block" : "none";
-    });
-    const keys = document.querySelectorAll(".key, .sharp");
-    keys.forEach((key) => {
-        key.addEventListener("mousedown", (event) => {
-            const synthType = synthTypeSelect.value;
-            const note = event.target.dataset.note;
-            if (synthType === "physical") {
-                const instrument = document.getElementById("instrumentType").value;
-                playPhysicalSynth(note, instrument);
-            } else {
-            const note = event.target.dataset.note;
-            const waveType = document.getElementById("waveType").value;
-                playNote(note, waveType);
-            }
-        });
 
-        key.addEventListener("mouseup", stopNote);
-        key.addEventListener("mouseleave", stopNote); // Ensures note stops when you move the mouse away
-    });
-
-    // Handle Keyboard input for notes (optional)
-    const keyMap = {
-        65: "C4", 87: "C#4", 83: "D4", 69: "D#4", 68: "E4", 70: "F4", 84: "F#4",
-        71: "G4", 89: "G#4", 72: "A4", 85: "A#4", 74: "B4", 75: "C5"
-    };
-
-    document.addEventListener("keydown", (event) => {
-        const synthType = synthTypeSelect.value;
-        const note = keyMap[event.keyCode];
-        if (synthType === "physical") {
-            const instrument = document.getElementById("instrumentType").value;
-            if (note) playPhysicalSynth(note, instrument);
-        } else {
-        const note = keyMap[event.keyCode];
-        const waveType = document.getElementById("waveType").value;
-            if (note) playNote(note, waveType);
-        }
-    });
-
-    document.addEventListener("keyup", stopNote);
+    // Function to Play a Note
 </script>
 </body>
 </html>
