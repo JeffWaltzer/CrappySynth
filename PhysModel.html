@@ -3,6 +3,7 @@
 <head>
     <script>
         function playSynth(note) {
+            console.log('playSynth:', note)
             const frequencies = {
                 A: 220.0,  // Frequency for A
                 "A#": 233.08, // Frequency for A#
@@ -192,21 +193,13 @@
         const velocity = data2;
 
         if (command === 9 && velocity > 0) {
-            const noteName = getNoteFromMIDINumber(note);
-            const midiOutputSelect = document.getElementById("midiOutput");
-            const selectedOutput = availableOutputs.get(midiOutputSelect.value);
-            if (selectedOutput) {
-                sendMIDINoteOn(selectedOutput, note);
-            } else {
-                playSynth(noteName);
-            }
-        } else if (command === 8 || (command === 9 && velocity === 0)) {
-            const noteName = getNoteFromMIDINumber(note);
-            const midiOutputSelect = document.getElementById("midiOutput");
-            const selectedOutput = availableOutputs.get(midiOutputSelect.value);
-            if (selectedOutput) {
-                sendMIDINoteOff(selectedOutput, note);
-            }
+            playSynth(getNoteFromMIDINumber(note));
+        // } else if (command === 8 || (command === 9 && velocity === 0)) {
+        //     const midiOutputSelect = document.getElementById("midiOutput");
+        //     const selectedOutput = availableOutputs.get(midiOutputSelect.value);
+        //     if (selectedOutput) {
+        //         sendMIDINoteOff(selectedOutput, note);
+        //     }
         }
     }
 
@@ -220,7 +213,6 @@
             option.textContent = output.name;
             midiOutputSelect.appendChild(option);
         });
-        // return notes[note % 12];
     }
 
     const audioContext = new (window.AudioContext || window.webkitAudioContext)();
@@ -228,6 +220,7 @@
 
     function sendMIDINoteOn(output, noteNumber, velocity = 127) {
         const noteOnMessage = [0x90, noteNumber, velocity];
+        console.log(noteOnMessage);
         output.send(noteOnMessage);
     }
 
@@ -235,358 +228,383 @@
         const noteOffMessage = [0x80, noteNumber, 0];
         output.send(noteOffMessage);
         const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-}
-        // Flute Sound Generation with Resonance and Sine Wave
-        function fluteSound(ctx, frequency, duration) {
-            const oscillator = createOscillator(ctx, "sine", frequency, -10);
-            const bandpass = ctx.createBiquadFilter(); // Add resonance with bandpass filter
-            bandpass.type = "bandpass";
-            bandpass.frequency.setValueAtTime(frequency, ctx.currentTime);
-            bandpass.Q.setValueAtTime(12, ctx.currentTime); // Set quality factor for resonance
+    }
 
-            // Amplitude Envelope
-            const gain = ctx.createGain();
-            gain.gain.setValueAtTime(0, ctx.currentTime);
-            gain.gain.linearRampToValueAtTime(0.8, ctx.currentTime + 0.1); // Attack
-            gain.gain.exponentialRampToValueAtTime(0.7, ctx.currentTime + 0.4); // Decay
-            gain.gain.setValueAtTime(0.6, ctx.currentTime + duration - 0.2); // Sustain
-            gain.gain.linearRampToValueAtTime(0.0, ctx.currentTime + duration + 0.05); // Release
+    // Flute Sound Generation with Resonance and Sine Wave
+    function fluteSound(ctx, frequency, duration) {
+        const oscillator = createOscillator(ctx, "sine", frequency, -10);
+        const bandpass = ctx.createBiquadFilter(); // Add resonance with bandpass filter
+        bandpass.type = "bandpass";
+        bandpass.frequency.setValueAtTime(frequency, ctx.currentTime);
+        bandpass.Q.setValueAtTime(12, ctx.currentTime); // Set quality factor for resonance
 
-            oscillator.connect(bandpass); // Connect oscillator to bandpass filter
-            bandpass.connect(gain); // Connect bandpass filter to gain
-            gain.connect(ctx.destination);
+        // Amplitude Envelope
+        const gain = ctx.createGain();
+        gain.gain.setValueAtTime(0, ctx.currentTime);
+        gain.gain.linearRampToValueAtTime(0.8, ctx.currentTime + 0.1); // Attack
+        gain.gain.exponentialRampToValueAtTime(0.7, ctx.currentTime + 0.4); // Decay
+        gain.gain.setValueAtTime(0.6, ctx.currentTime + duration - 0.2); // Sustain
+        gain.gain.linearRampToValueAtTime(0.0, ctx.currentTime + duration + 0.05); // Release
 
-            oscillator.start();
-            oscillator.stop(ctx.currentTime + duration); // Stop after the specified duration
+        oscillator.connect(bandpass); // Connect oscillator to bandpass filter
+        bandpass.connect(gain); // Connect bandpass filter to gain
+        gain.connect(ctx.destination);
+
+        oscillator.start();
+        oscillator.stop(ctx.currentTime + duration); // Stop after the specified duration
+    }
+
+    // Tubular Bell Sound Generation
+    function tubularBellSound(ctx, frequency, duration) {
+        const oscillator = createOscillator(ctx, "triangle", frequency * 0.9);
+        const secondOscillator = createOscillator(ctx, "triangle", frequency * 1.3); // Add a secondary oscillator for depth
+        const thirdOscillator = createOscillator(ctx, "sine", frequency * 1.8); // Add a third oscillator for more resonance
+        const detuneOscillator = createOscillator(ctx, "triangle", frequency * 0.95); // Detuned oscillator for additional harmonics
+
+        oscillator.frequency.exponentialRampToValueAtTime(frequency * 0.88, ctx.currentTime + 0.8); // Larger drop for warmth
+        thirdOscillator.frequency.exponentialRampToValueAtTime(frequency * 1.6, ctx.currentTime + 0.8); // Match ramp for mellow resonance
+        detuneOscillator.frequency.exponentialRampToValueAtTime(frequency * 0.92, ctx.currentTime + 0.9); // Softer detuned ramp
+
+        // Amplitude Envelope
+        const gain = ctx.createGain();
+        gain.gain.setValueAtTime(0, ctx.currentTime);
+        gain.gain.linearRampToValueAtTime(0.7, ctx.currentTime + 0.2); // Softer attack
+        gain.gain.exponentialRampToValueAtTime(0.3, ctx.currentTime + duration - 0.5); // Milder decay
+        gain.gain.linearRampToValueAtTime(0.0, ctx.currentTime + duration + 0.2); // Slightly longer release
+
+        oscillator.connect(gain);
+        secondOscillator.connect(gain); // Connect secondary oscillator
+        thirdOscillator.connect(gain); // Connect third oscillator
+        detuneOscillator.connect(gain); // Connect detuned oscillator
+        gain.connect(ctx.destination);
+
+        oscillator.start();
+        secondOscillator.start(); // Start second oscillator
+        thirdOscillator.start(); // Start third oscillator
+        detuneOscillator.start(); // Start detuned oscillator
+        oscillator.stop(ctx.currentTime + duration); // Stop after specified duration
+        secondOscillator.stop(ctx.currentTime + duration); // Stop second oscillator
+        thirdOscillator.stop(ctx.currentTime + duration); // Stop third oscillator
+        detuneOscillator.stop(ctx.currentTime + duration); // Stop detuned oscillator
+    }
+
+
+    // Function to Play a Note
+    // Guitar Sound Generation
+    function playCChord() {
+        const cFrequency = 261.63; // C4
+        const eFrequency = 329.63; // E4
+        const gFrequency = 392.00; // G4
+        const chordDuration = 2;
+        const selectedInstrument = document.getElementById("instrument").value;
+        playChord(selectedInstrument, audioContext, [cFrequency, eFrequency, gFrequency], chordDuration);
+    }
+
+    function playGChord() {
+        const gFrequency = 196.00; // G3
+        const bFrequency = 246.94; // B3
+        const dFrequency = 293.66; // D4
+        const chordDuration = 2;
+        const selectedInstrument = document.getElementById("instrument").value;
+        playChord(selectedInstrument, audioContext, [gFrequency, bFrequency, dFrequency], chordDuration);
+    }
+
+    function playFChord() {
+        const fFrequency = 174.61; // F3
+        const aFrequency = 220.00; // A3
+        const cFrequency = 261.63; // C4
+        const chordDuration = 2;
+        const selectedInstrument = document.getElementById("instrument").value;
+        playChord(selectedInstrument, audioContext, [fFrequency, aFrequency, cFrequency], chordDuration);
+    }
+
+    function playFmChord() {
+        const fFrequency = 174.61; // F3
+        const aFlatFrequency = 207.65; // Ab3
+        const cFrequency = 261.63; // C4
+        const chordDuration = 2;
+        const selectedInstrument = document.getElementById("instrument").value;
+        playChord(selectedInstrument, audioContext, [fFrequency, aFlatFrequency, cFrequency], chordDuration);
+    }
+
+
+    function playDChord() {
+        const dFrequency = 293.66; // D4
+        const fSharpFrequency = 369.99; // F#4
+        const aFrequency = 440.00; // A4
+        const chordDuration = 2;
+        const selectedInstrument = document.getElementById("instrument").value;
+        playChord(selectedInstrument, audioContext, [dFrequency, fSharpFrequency, aFrequency], chordDuration);
+    }
+
+    function playEChord() {
+        const eFrequency = 329.63; // E4
+        const gSharpFrequency = 415.30; // G#4
+        const bFrequency = 493.88; // B4
+        const chordDuration = 2;
+        const selectedInstrument = document.getElementById("instrument").value;
+        playChord(selectedInstrument, audioContext, [eFrequency, gSharpFrequency, bFrequency], chordDuration);
+    }
+
+    function playBChord() {
+        const bFrequency = 246.94; // B3
+        const dSharpFrequency = 311.13; // D#4
+        const fSharpFrequency = 369.99; // F#4
+        const chordDuration = 2;
+        const selectedInstrument = document.getElementById("instrument").value;
+        playChord(selectedInstrument, audioContext, [bFrequency, dSharpFrequency, fSharpFrequency], chordDuration);
+    }
+
+    function playDmChord() {
+        const dFrequency = 293.66; // D4
+        const fFrequency = 349.23; // F4
+        const aFrequency = 440.00; // A4
+        const chordDuration = 2;
+        const selectedInstrument = document.getElementById("instrument").value;
+        playChord(selectedInstrument, audioContext, [dFrequency, fFrequency, aFrequency], chordDuration);
+    }
+
+    function playAChord() {
+        const aFrequency = 220.00; // A3
+        const cSharpFrequency = 277.18; // C#4
+        const eFrequency = 329.63; // E4
+        const chordDuration = 2; // 2 seconds
+        const selectedInstrument = document.getElementById("instrument").value;
+        playChord(selectedInstrument, audioContext, [aFrequency, cSharpFrequency, eFrequency], chordDuration);
+    }
+
+    function playA7Chord() {
+        const aFrequency = 220.00; // A3
+        const cSharpFrequency = 277.18; // C#4
+        const eFrequency = 329.63; // E4
+        const gFrequency = 392.00; // G4
+        const chordDuration = 2; // 2 seconds
+        const selectedInstrument = document.getElementById("instrument").value;
+        playChord(selectedInstrument, audioContext, [aFrequency, cSharpFrequency, eFrequency, gFrequency], chordDuration);
+    }
+
+    function playFmaj7Chord() {
+        const fFrequency = 174.61; // F3
+        const aFrequency = 220.00; // A3
+        const cFrequency = 261.63; // C4
+        const eFrequency = 329.63; // E4
+        const chordDuration = 2;
+        const selectedInstrument = document.getElementById("instrument").value;
+        playChord(selectedInstrument, audioContext, [fFrequency, aFrequency, cFrequency, eFrequency], chordDuration);
+    }
+
+    function playAm7Chord() {
+        const aFrequency = 220.00; // A3
+        const cFrequency = 261.63; // C4
+        const eFrequency = 329.63; // E4
+        const gFrequency = 392.00; // G4
+        const chordDuration = 2;
+        const selectedInstrument = document.getElementById("instrument").value;
+        playChord(selectedInstrument, audioContext, [aFrequency, cFrequency, eFrequency, gFrequency], chordDuration);
+    }
+
+    function playF7Chord() {
+        const fFrequency = 174.61; // F3
+        const aFrequency = 220.00; // A3
+        const cFrequency = 261.63; // C4
+        const eFlatFrequency = 311.13; // Eb4
+        const chordDuration = 2;
+        const selectedInstrument = document.getElementById("instrument").value;
+        playChord(selectedInstrument, audioContext, [fFrequency, aFrequency, cFrequency, eFlatFrequency], chordDuration);
+    }
+
+
+    function playGmChord() {
+        const eFrequency = 164.81; // E3
+        const gFrequency = 196.00; // G3
+        const bFrequency = 246.94; // B3
+        const chordDuration = 2; // 2 seconds
+        const selectedInstrument = document.getElementById("instrument").value;
+        playChord(selectedInstrument, audioContext, [eFrequency, gFrequency, bFrequency], chordDuration);
+    }
+
+    function playBmChord() {
+        const bFrequency = 246.94; // B3
+        const dFrequency = 293.66; // D4
+        const fSharpFrequency = 369.99; // F#4
+        const chordDuration = 2; // 2 seconds
+        const selectedInstrument = document.getElementById("instrument").value;
+        playChord(selectedInstrument, audioContext, [bFrequency, dFrequency, fSharpFrequency], chordDuration);
+    }
+
+    function playEmChord() {
+        const eFrequency = 329.63; // E4
+        const gFrequency = 392.00; // G4
+        const bFrequency = 246.94; // B3
+        const chordDuration = 2; // 2 seconds
+        const selectedInstrument = document.getElementById("instrument").value;
+        playChord(selectedInstrument, audioContext, [eFrequency, gFrequency, bFrequency], chordDuration);
+    }
+
+
+    function playAmChord() {
+        const aFrequency = 220.00; // A3
+        const cFrequency = 261.63; // C4
+        const eFrequency = 329.63; // E4
+        const chordDuration = 2; // 2 seconds
+        const selectedInstrument = document.getElementById("instrument").value;
+        playChord(selectedInstrument, audioContext, [aFrequency, cFrequency, eFrequency], chordDuration);
+    }
+
+    function playCmChord() {
+        const cFrequency = 261.63; // C4
+        const dSharpFrequency = 311.13; // D#4
+        const gFrequency = 392.00; // G4
+        const chordDuration = 2; // 2 seconds
+        const selectedInstrument = document.getElementById("instrument").value;
+        playChord(selectedInstrument, audioContext, [cFrequency, dSharpFrequency, gFrequency], chordDuration);
+    }
+
+    function guitarSound(ctx, frequency, duration) {
+        const oscillator = createOscillator(ctx, "sawtooth", frequency);
+
+        const detunedOscillator = createOscillator(ctx, "sawtooth", frequency, -12); // Enhance with detuned harmonic oscillator
+
+        const gain = ctx.createGain();
+        gain.gain.setValueAtTime(0, ctx.currentTime);
+        gain.gain.linearRampToValueAtTime(1.0, ctx.currentTime + 0.02); // Quick attack
+        gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + duration); // Quick decay to mimic pluck
+
+        // Body resonance effect for pluck
+        const bodyFilter = ctx.createBiquadFilter();
+        bodyFilter.type = "lowpass";
+        bodyFilter.frequency.setValueAtTime(2200, ctx.currentTime); // High frequency for initial brightness
+        bodyFilter.frequency.exponentialRampToValueAtTime(800, ctx.currentTime + duration); // Frequency drop for realism
+
+        // Physical resonance simulation
+        const resonance = ctx.createConvolver();
+        const impulse = ctx.createBuffer(2, ctx.sampleRate / 2, ctx.sampleRate); // Simulated impulse response
+        const left = impulse.getChannelData(0);
+        const right = impulse.getChannelData(1);
+        for (let i = 0; i < left.length; i++) {
+            left[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / left.length, 2); // Damped random signal
+            right[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / right.length, 2); // Damped random signal
         }
+        resonance.buffer = impulse;
 
-        // Tubular Bell Sound Generation
-        function tubularBellSound(ctx, frequency, duration) {
-            const oscillator = createOscillator(ctx, "triangle", frequency * 0.9);
-            const secondOscillator = createOscillator(ctx, "triangle", frequency * 1.3); // Add a secondary oscillator for depth
-            const thirdOscillator = createOscillator(ctx, "sine", frequency * 1.8); // Add a third oscillator for more resonance
-            const detuneOscillator = createOscillator(ctx, "triangle", frequency * 0.95); // Detuned oscillator for additional harmonics
+        oscillator.connect(bodyFilter);
+        detunedOscillator.connect(bodyFilter); // Connect detuned oscillator
+        bodyFilter.connect(resonance);
+        resonance.connect(gain);
+        gain.connect(ctx.destination);
 
-            oscillator.frequency.exponentialRampToValueAtTime(frequency * 0.88, ctx.currentTime + 0.8); // Larger drop for warmth
-            thirdOscillator.frequency.exponentialRampToValueAtTime(frequency * 1.6, ctx.currentTime + 0.8); // Match ramp for mellow resonance
-            detuneOscillator.frequency.exponentialRampToValueAtTime(frequency * 0.92, ctx.currentTime + 0.9); // Softer detuned ramp
+        oscillator.start();
+        detunedOscillator.start(); // Start detuned oscillator
+        oscillator.stop(ctx.currentTime + duration); // Stop after the specified duration
+        detunedOscillator.stop(ctx.currentTime + duration); // Stop detuned oscillator
+    }
 
-            // Amplitude Envelope
-            const gain = ctx.createGain();
-            gain.gain.setValueAtTime(0, ctx.currentTime);
-            gain.gain.linearRampToValueAtTime(0.7, ctx.currentTime + 0.2); // Softer attack
-            gain.gain.exponentialRampToValueAtTime(0.3, ctx.currentTime + duration - 0.5); // Milder decay
-            gain.gain.linearRampToValueAtTime(0.0, ctx.currentTime + duration + 0.2); // Slightly longer release
 
-            oscillator.connect(gain);
-            secondOscillator.connect(gain); // Connect secondary oscillator
-            thirdOscillator.connect(gain); // Connect third oscillator
-            detuneOscillator.connect(gain); // Connect detuned oscillator
-            gain.connect(ctx.destination);
-
-            oscillator.start();
-            secondOscillator.start(); // Start second oscillator
-            thirdOscillator.start(); // Start third oscillator
-            detuneOscillator.start(); // Start detuned oscillator
-            oscillator.stop(ctx.currentTime + duration); // Stop after specified duration
-            secondOscillator.stop(ctx.currentTime + duration); // Stop second oscillator
-            thirdOscillator.stop(ctx.currentTime + duration); // Stop third oscillator
-            detuneOscillator.stop(ctx.currentTime + duration); // Stop detuned oscillator
+    function playInstrument(instrument, ctx, frequency, duration) {
+        const instruments = {
+            flute: fluteSound,
+            tubularBell: tubularBellSound,
+            marimba: marimbaSound,
+            guitar: guitarSound,
+            grandPiano: pianoSound,
+            violin: violinSound,
+        };
+        const playFn = instruments[instrument];
+        if (playFn) {
+            playFn(ctx, frequency, duration);
         }
+    }
 
+    function adjustGainForChord(playFn, gain, duration, ctx) {
+        const gainNode = ctx.createGain();
+        gainNode.gain.setValueAtTime(gain, ctx.currentTime);
+        gainNode.gain.linearRampToValueAtTime(gain, ctx.currentTime + duration);
+        gainNode.connect(ctx.destination);
+        playFn();
+    }
 
-        // Function to Play a Note
-        // Guitar Sound Generation
-        function playCChord() {
-            const cFrequency = 261.63; // C4
-            const eFrequency = 329.63; // E4
-            const gFrequency = 392.00; // G4
-            const chordDuration = 2;
-            const selectedInstrument = document.getElementById("instrument").value;
-            playChord(selectedInstrument, audioContext, [cFrequency, eFrequency, gFrequency], chordDuration);
-        }
+    function playChord(instrument, ctx, frequencies, duration) {
+        const normalizedGain = 1 / Math.sqrt(frequencies.length); // Normalize combined amplitude
+        var normalizedDuration = 2;
+        frequencies.forEach((freq) => {
+            const instrumentSound = () => playInstrument(instrument, ctx, freq, normalizedDuration);
+            adjustGainForChord(instrumentSound, normalizedGain, normalizedDuration, ctx);
+        });
 
-        function playGChord() {
-            const gFrequency = 196.00; // G3
-            const bFrequency = 246.94; // B3
-            const dFrequency = 293.66; // D4
-            const chordDuration = 2;
-            const selectedInstrument = document.getElementById("instrument").value;
-            playChord(selectedInstrument, audioContext, [gFrequency, bFrequency, dFrequency], chordDuration);
-        }
+        frequencies.forEach((freq) => playInstrument(instrument, ctx, freq, normalizedDuration));
+    }
 
-        function playFChord() {
-            const fFrequency = 174.61; // F3
-            const aFrequency = 220.00; // A3
-            const cFrequency = 261.63; // C4
-            const chordDuration = 2;
-            const selectedInstrument = document.getElementById("instrument").value;
-            playChord(selectedInstrument, audioContext, [fFrequency, aFrequency, cFrequency], chordDuration);
-        }
+    function createOscillator(ctx, type, frequency, detune = 0) {
+        const oscillator = ctx.createOscillator();
+        oscillator.type = type;
+        oscillator.frequency.setValueAtTime(frequency, ctx.currentTime);
+        oscillator.detune.value = detune;
+        return oscillator;
+    }
 
-        function playFmChord() {
-            const fFrequency = 174.61; // F3
-            const aFlatFrequency = 207.65; // Ab3
-            const cFrequency = 261.63; // C4
-            const chordDuration = 2;
-            const selectedInstrument = document.getElementById("instrument").value;
-            playChord(selectedInstrument, audioContext, [fFrequency, aFlatFrequency, cFrequency], chordDuration);
-        }
+    function marimbaSound(ctx, frequency, duration) {
+        const oscillator = ctx.createOscillator();
+        oscillator.type = "square"; // Square wave for percussive tone
+        oscillator.frequency.setValueAtTime(frequency, ctx.currentTime);
 
+        // Amplitude Envelope
+        const gain = ctx.createGain();
+        gain.gain.setValueAtTime(0, ctx.currentTime);
+        gain.gain.linearRampToValueAtTime(1.2, ctx.currentTime + 0.02); // Quick attack for percussive sound
+        gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + duration); // Rapid decay for short marimba notes
 
-        function playDChord() {
-            const dFrequency = 293.66; // D4
-            const fSharpFrequency = 369.99; // F#4
-            const aFrequency = 440.00; // A4
-            const chordDuration = 2;
-            const selectedInstrument = document.getElementById("instrument").value;
-            playChord(selectedInstrument, audioContext, [dFrequency, fSharpFrequency, aFrequency], chordDuration);
-        }
+        // Filter for marimba tone shaping
+        const bandpass = ctx.createBiquadFilter();
+        bandpass.type = "bandpass";
+        bandpass.frequency.setValueAtTime(frequency, ctx.currentTime);
+        bandpass.Q.setValueAtTime(8, ctx.currentTime); // Moderate quality for defined tone
 
-        function playEChord() {
-            const eFrequency = 329.63; // E4
-            const gSharpFrequency = 415.30; // G#4
-            const bFrequency = 493.88; // B4
-            const chordDuration = 2;
-            const selectedInstrument = document.getElementById("instrument").value;
-            playChord(selectedInstrument, audioContext, [eFrequency, gSharpFrequency, bFrequency], chordDuration);
-        }
+        oscillator.connect(bandpass);
+        bandpass.connect(gain);
+        gain.connect(ctx.destination);
 
-        function playBChord() {
-            const bFrequency = 246.94; // B3
-            const dSharpFrequency = 311.13; // D#4
-            const fSharpFrequency = 369.99; // F#4
-            const chordDuration = 2;
-            const selectedInstrument = document.getElementById("instrument").value;
-            playChord(selectedInstrument, audioContext, [bFrequency, dSharpFrequency, fSharpFrequency], chordDuration);
-        }
+        oscillator.start();
+        oscillator.stop(ctx.currentTime + duration); // Stop after the specified duration
+    }
 
-        function playDmChord() {
-            const dFrequency = 293.66; // D4
-            const fFrequency = 349.23; // F4
-            const aFrequency = 440.00; // A4
-            const chordDuration = 2;
-            const selectedInstrument = document.getElementById("instrument").value;
-            playChord(selectedInstrument, audioContext, [dFrequency, fFrequency, aFrequency], chordDuration);
-        }
+    // Violin Sound Generation
+    function violinSound(ctx, frequency, duration) {
+        const baseGain = ctx.createGain();
+        baseGain.gain.setValueAtTime(0, ctx.currentTime);
+        baseGain.gain.linearRampToValueAtTime(1.0, ctx.currentTime + 0.1); // Attack
+        baseGain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + duration); // Decay
 
-        function playAChord() {
-            const aFrequency = 220.00; // A3
-            const cSharpFrequency = 277.18; // C#4
-            const eFrequency = 329.63; // E4
-            const chordDuration = 2; // 2 seconds
-            const selectedInstrument = document.getElementById("instrument").value;
-            playChord(selectedInstrument, audioContext, [aFrequency, cSharpFrequency, eFrequency], chordDuration);
-        }
+        const detuneOffset = 0;//(i === 0 ? 0 : i === 1 ? -5 : 5); // Slight detune for realism
+        const oscillator = createOscillator(ctx, "sawtooth", frequency, detuneOffset);
+        oscillator.frequency.setValueAtTime(frequency, ctx.currentTime);
 
-        function playA7Chord() {
-            const aFrequency = 220.00; // A3
-            const cSharpFrequency = 277.18; // C#4
-            const eFrequency = 329.63; // E4
-            const gFrequency = 392.00; // G4
-            const chordDuration = 2; // 2 seconds
-            const selectedInstrument = document.getElementById("instrument").value;
-            playChord(selectedInstrument, audioContext, [aFrequency, cSharpFrequency, eFrequency, gFrequency], chordDuration);
-        }
+        const filter = ctx.createBiquadFilter();
+        filter.type = "lowpass";
+        filter.frequency.setValueAtTime(5000, ctx.currentTime); // Warm tone
+        filter.Q.setValueAtTime(1, ctx.currentTime);
 
-        function playFmaj7Chord() {
-            const fFrequency = 174.61; // F3
-            const aFrequency = 220.00; // A3
-            const cFrequency = 261.63; // C4
-            const eFrequency = 329.63; // E4
-            const chordDuration = 2;
-            const selectedInstrument = document.getElementById("instrument").value;
-            playChord(selectedInstrument, audioContext, [fFrequency, aFrequency, cFrequency, eFrequency], chordDuration);
-        }
+        oscillator.connect(filter);
+        filter.connect(baseGain);
+        baseGain.connect(ctx.destination);
 
-        function playAm7Chord() {
-            const aFrequency = 220.00; // A3
-            const cFrequency = 261.63; // C4
-            const eFrequency = 329.63; // E4
-            const gFrequency = 392.00; // G4
-            const chordDuration = 2;
-            const selectedInstrument = document.getElementById("instrument").value;
-            playChord(selectedInstrument, audioContext, [aFrequency, cFrequency, eFrequency, gFrequency], chordDuration);
-        }
+        oscillator.start();
+        oscillator.stop(ctx.currentTime + duration);
+    }
 
-        function playF7Chord() {
-            const fFrequency = 174.61; // F3
-            const aFrequency = 220.00; // A3
-            const cFrequency = 261.63; // C4
-            const eFlatFrequency = 311.13; // Eb4
-            const chordDuration = 2;
-            const selectedInstrument = document.getElementById("instrument").value;
-            playChord(selectedInstrument, audioContext, [fFrequency, aFrequency, cFrequency, eFlatFrequency], chordDuration);
-        }
+    // Grand Piano Sound Generation
+    function pianoSound(ctx, frequency, duration) {
+        const baseGain = ctx.createGain();
+        baseGain.gain.setValueAtTime(0, ctx.currentTime);
+        baseGain.gain.linearRampToValueAtTime(1.0, ctx.currentTime + 0.03); // Quick attack
+        baseGain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + duration); // Long decay
 
-
-        function playGmChord() {
-            const eFrequency = 164.81; // E3
-            const gFrequency = 196.00; // G3
-            const bFrequency = 246.94; // B3
-            const chordDuration = 2; // 2 seconds
-            const selectedInstrument = document.getElementById("instrument").value;
-            playChord(selectedInstrument, audioContext, [eFrequency, gFrequency, bFrequency], chordDuration);
-        }
-
-        function playBmChord() {
-            const bFrequency = 246.94; // B3
-            const dFrequency = 293.66; // D4
-            const fSharpFrequency = 369.99; // F#4
-            const chordDuration = 2; // 2 seconds
-            const selectedInstrument = document.getElementById("instrument").value;
-            playChord(selectedInstrument, audioContext, [bFrequency, dFrequency, fSharpFrequency], chordDuration);
-        }
-
-        function playEmChord() {
-            const eFrequency = 329.63; // E4
-            const gFrequency = 392.00; // G4
-            const bFrequency = 246.94; // B3
-            const chordDuration = 2; // 2 seconds
-            const selectedInstrument = document.getElementById("instrument").value;
-            playChord(selectedInstrument, audioContext, [eFrequency, gFrequency, bFrequency], chordDuration);
-        }
-
-
-        function playAmChord() {
-            const aFrequency = 220.00; // A3
-            const cFrequency = 261.63; // C4
-            const eFrequency = 329.63; // E4
-            const chordDuration = 2; // 2 seconds
-            const selectedInstrument = document.getElementById("instrument").value;
-            playChord(selectedInstrument, audioContext, [aFrequency, cFrequency, eFrequency], chordDuration);
-        }
-
-        function playCmChord() {
-            const cFrequency = 261.63; // C4
-            const dSharpFrequency = 311.13; // D#4
-            const gFrequency = 392.00; // G4
-            const chordDuration = 2; // 2 seconds
-            const selectedInstrument = document.getElementById("instrument").value;
-            playChord(selectedInstrument, audioContext, [cFrequency, dSharpFrequency, gFrequency], chordDuration);
-        }
-
-        function guitarSound(ctx, frequency, duration) {
-            const oscillator = createOscillator(ctx, "sawtooth", frequency);
-
-            const detunedOscillator = createOscillator(ctx, "sawtooth", frequency, -12); // Enhance with detuned harmonic oscillator
-
-            const gain = ctx.createGain();
-            gain.gain.setValueAtTime(0, ctx.currentTime);
-            gain.gain.linearRampToValueAtTime(1.0, ctx.currentTime + 0.02); // Quick attack
-            gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + duration); // Quick decay to mimic pluck
-
-            // Body resonance effect for pluck
-            const bodyFilter = ctx.createBiquadFilter();
-            bodyFilter.type = "lowpass";
-            bodyFilter.frequency.setValueAtTime(2200, ctx.currentTime); // High frequency for initial brightness
-            bodyFilter.frequency.exponentialRampToValueAtTime(800, ctx.currentTime + duration); // Frequency drop for realism
-
-            // Physical resonance simulation
-            const resonance = ctx.createConvolver();
-            const impulse = ctx.createBuffer(2, ctx.sampleRate / 2, ctx.sampleRate); // Simulated impulse response
-            const left = impulse.getChannelData(0);
-            const right = impulse.getChannelData(1);
-            for (let i = 0; i < left.length; i++) {
-                left[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / left.length, 2); // Damped random signal
-                right[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / right.length, 2); // Damped random signal
-            }
-            resonance.buffer = impulse;
-
-            oscillator.connect(bodyFilter);
-            detunedOscillator.connect(bodyFilter); // Connect detuned oscillator
-            bodyFilter.connect(resonance);
-            resonance.connect(gain);
-            gain.connect(ctx.destination);
-
-            oscillator.start();
-            detunedOscillator.start(); // Start detuned oscillator
-            oscillator.stop(ctx.currentTime + duration); // Stop after the specified duration
-            detunedOscillator.stop(ctx.currentTime + duration); // Stop detuned oscillator
-        }
-
-
-        function playInstrument(instrument, ctx, frequency, duration) {
-            const instruments = {
-                flute: fluteSound,
-                tubularBell: tubularBellSound,
-                marimba: marimbaSound,
-                guitar: guitarSound,
-                grandPiano: pianoSound,
-                violin: violinSound,
-            };
-            const playFn = instruments[instrument];
-            if (playFn) {
-                playFn(ctx, frequency, duration);
-            }
-        }
-
-        function adjustGainForChord(playFn, gain, duration, ctx) {
-            const gainNode = ctx.createGain();
-            gainNode.gain.setValueAtTime(gain, ctx.currentTime);
-            gainNode.gain.linearRampToValueAtTime(gain, ctx.currentTime + duration);
-            gainNode.connect(ctx.destination);
-            playFn();
-        }
-
-        function playChord(instrument, ctx, frequencies, duration) {
-            const normalizedGain = 1 / Math.sqrt(frequencies.length); // Normalize combined amplitude
-            var normalizedDuration = 2;
-            frequencies.forEach((freq) => {
-                const instrumentSound = () => playInstrument(instrument, ctx, freq, normalizedDuration);
-                adjustGainForChord(instrumentSound, normalizedGain, normalizedDuration, ctx);
-            });
-
-            frequencies.forEach((freq) => playInstrument(instrument, ctx, freq, normalizedDuration));
-        }
-
-        function createOscillator(ctx, type, frequency, detune = 0) {
-            const oscillator = ctx.createOscillator();
-            oscillator.type = type;
-            oscillator.frequency.setValueAtTime(frequency, ctx.currentTime);
-            oscillator.detune.value = detune;
-            return oscillator;
-        }
-
-        function marimbaSound(ctx, frequency, duration) {
-            const oscillator = ctx.createOscillator();
-            oscillator.type = "square"; // Square wave for percussive tone
-            oscillator.frequency.setValueAtTime(frequency, ctx.currentTime);
-
-            // Amplitude Envelope
-            const gain = ctx.createGain();
-            gain.gain.setValueAtTime(0, ctx.currentTime);
-            gain.gain.linearRampToValueAtTime(1.2, ctx.currentTime + 0.02); // Quick attack for percussive sound
-            gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + duration); // Rapid decay for short marimba notes
-
-            // Filter for marimba tone shaping
-            const bandpass = ctx.createBiquadFilter();
-            bandpass.type = "bandpass";
-            bandpass.frequency.setValueAtTime(frequency, ctx.currentTime);
-            bandpass.Q.setValueAtTime(8, ctx.currentTime); // Moderate quality for defined tone
-
-            oscillator.connect(bandpass);
-            bandpass.connect(gain);
-            gain.connect(ctx.destination);
-
-            oscillator.start();
-            oscillator.stop(ctx.currentTime + duration); // Stop after the specified duration
-        }
-
-        // Violin Sound Generation
-        function violinSound(ctx, frequency, duration) {
-            const baseGain = ctx.createGain();
-            baseGain.gain.setValueAtTime(0, ctx.currentTime);
-            baseGain.gain.linearRampToValueAtTime(1.0, ctx.currentTime + 0.1); // Attack
-            baseGain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + duration); // Decay
-
-            const detuneOffset = 0;//(i === 0 ? 0 : i === 1 ? -5 : 5); // Slight detune for realism
-            const oscillator = createOscillator(ctx, "sawtooth", frequency, detuneOffset);
-            oscillator.frequency.setValueAtTime(frequency, ctx.currentTime);
+        for (let i = 0; i < 3; i++) {
+            const detuneOffset = (i === 0 ? 0 : i === 1 ? -2 : 2); // Slight detune for realism
+            const oscillator = createOscillator(ctx, "sine", frequency, detuneOffset);
 
             const filter = ctx.createBiquadFilter();
             filter.type = "lowpass";
-            filter.frequency.setValueAtTime(5000, ctx.currentTime); // Warm tone
+            filter.frequency.setValueAtTime(6000, ctx.currentTime); // Warm tone
             filter.Q.setValueAtTime(1, ctx.currentTime);
 
             oscillator.connect(filter);
@@ -596,31 +614,7 @@
             oscillator.start();
             oscillator.stop(ctx.currentTime + duration);
         }
-
-        // Grand Piano Sound Generation
-        function pianoSound(ctx, frequency, duration) {
-            const baseGain = ctx.createGain();
-            baseGain.gain.setValueAtTime(0, ctx.currentTime);
-            baseGain.gain.linearRampToValueAtTime(1.0, ctx.currentTime + 0.03); // Quick attack
-            baseGain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + duration); // Long decay
-
-            for (let i = 0; i < 3; i++) {
-                const detuneOffset = (i === 0 ? 0 : i === 1 ? -2 : 2); // Slight detune for realism
-                const oscillator = createOscillator(ctx, "sine", frequency, detuneOffset);
-
-                const filter = ctx.createBiquadFilter();
-                filter.type = "lowpass";
-                filter.frequency.setValueAtTime(6000, ctx.currentTime); // Warm tone
-                filter.Q.setValueAtTime(1, ctx.currentTime);
-
-                oscillator.connect(filter);
-                filter.connect(baseGain);
-                baseGain.connect(ctx.destination);
-
-                oscillator.start();
-                oscillator.stop(ctx.currentTime + duration);
-            }
-        }
+    }
 </script>
 </body>
 </html>
