@@ -390,8 +390,6 @@ breathControlGain.gain.setValueAtTime(0.1, ctx.currentTime); // Reduce breath no
         const secondHarmonic = createOscillator(ctx, "sine", frequency * 3.2); // Another harmonic
 
         // Amplitude envelope for decay
-
-        const gain = ctx.createGain();
         gain.gain.setValueAtTime(0, ctx.currentTime);
         gain.gain.linearRampToValueAtTime(1.0, ctx.currentTime + 0.05); // Quick attack
         gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + duration); // Long decay
