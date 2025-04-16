@@ -64,6 +64,11 @@
 <body>
 <h1>Web Synthesizer</h1>
 <label for="waveType">Waveform:</label>
+<select id="synthType">
+    <option value="subtractive">Subtractive</option>
+    <option value="physical">Physical Modeling</option>
+</select>
+<label for="waveType">Waveform:</label>
 <select id="waveType">
     <option value="sine">Sine</option>
     <option value="square">Square</option>
@@ -96,11 +101,19 @@
     <div style="grid-column-start: 8;"></div>
     <div class="sharp" data-note="C#5"></div>
     <div class="sharp" data-note="D#5"></div>
-    <div style="grid-column-start: 11;"></div>
+
+<div id="physicalModelingOptions" style="display: none; margin-top: 20px;">
+    <label for="instrumentType">Instrument:</label>
+    <select id="instrumentType">
+        <option value="plucked">Plucked Strings</option>
+        <option value="wind">Wind Instrument</option>
+    </select>
+</div>
 </div>
 
 <script>
     // Web Audio API setup
+    let physicalSynth;
     const audioContext = new (window.AudioContext || window.webkitAudioContext)();
     let oscillator;
     let gainNode = audioContext.createGain();
@@ -116,6 +129,60 @@
     };
 
     // Play a note
+function playPhysicalSynth(note, instrument) {
+    if (instrument === "plucked") {
+        const frequency = noteFrequencies[note];
+        const sampleRate = audioContext.sampleRate;
+        const bufferSize = Math.floor(sampleRate / frequency);
+        const decayFactor = 0.997; // Decay rate for the Karplus-Strong
+
+        const buffer = new Float32Array(bufferSize).map(() => Math.random() * 2 - 1);
+        const whiteNoise = audioContext.createBuffer(1, buffer.length, sampleRate);
+        whiteNoise.copyToChannel(buffer, 0);
+
+        const bufferSource = audioContext.createBufferSource();
+        bufferSource.buffer = whiteNoise;
+
+        const lowPassFilter = audioContext.createBiquadFilter();
+        lowPassFilter.type = "lowpass";
+        lowPassFilter.frequency.setValueAtTime(frequency * decayFactor, audioContext.currentTime);
+
+        bufferSource.connect(lowPassFilter);
+        lowPassFilter.connect(gainNode);
+
+        bufferSource.start();
+        console.log(`Plucked string triggered: ${note}`);
+
+        setTimeout(() => bufferSource.stop(), 100);
+    } else if (instrument === "wind") {
+        const frequency = noteFrequencies[note];
+        const baseOscillator = audioContext.createOscillator();
+        const lfoOscillator = audioContext.createOscillator();
+        const lfoGain = audioContext.createGain();
+
+        baseOscillator.type = "sine";
+        baseOscillator.frequency.setValueAtTime(frequency, audioContext.currentTime);
+
+        lfoOscillator.type = "sine";
+        lfoOscillator.frequency.setValueAtTime(5, audioContext.currentTime); // LFO modulates at 5 Hz
+
+        lfoGain.gain.setValueAtTime(10, audioContext.currentTime); // LFO intensity
+
+        lfoOscillator.connect(lfoGain);
+        lfoGain.connect(baseOscillator.frequency);
+        baseOscillator.connect(gainNode);
+
+        baseOscillator.start();
+        lfoOscillator.start();
+
+        console.log(`Wind instrument triggered: ${note}`);
+
+        setTimeout(() => {
+            baseOscillator.stop();
+            lfoOscillator.stop();
+        }, 500); // Wind sound plays for 500ms
+    }
+}
     function playNote(note, waveType) {
         const frequency = noteFrequencies[note];
         oscillator = audioContext.createOscillator();
@@ -134,12 +201,25 @@
     }
 
     // Handle key press
+    const synthTypeSelect = document.getElementById("synthType");
+    const physicalModelingOptions = document.getElementById("physicalModelingOptions");
+    synthTypeSelect.addEventListener("change", () => {
+        const synthType = synthTypeSelect.value;
+        physicalModelingOptions.style.display = synthType === "physical" ? "block" : "none";
+    });
     const keys = document.querySelectorAll(".key, .sharp");
     keys.forEach((key) => {
         key.addEventListener("mousedown", (event) => {
+            const synthType = synthTypeSelect.value;
+            const note = event.target.dataset.note;
+            if (synthType === "physical") {
+                const instrument = document.getElementById("instrumentType").value;
+                playPhysicalSynth(note, instrument);
+            } else {
             const note = event.target.dataset.note;
             const waveType = document.getElementById("waveType").value;
-            playNote(note, waveType);
+                playNote(note, waveType);
+            }
         });
 
         key.addEventListener("mouseup", stopNote);
@@ -153,9 +233,16 @@
     };
 
     document.addEventListener("keydown", (event) => {
+        const synthType = synthTypeSelect.value;
+        const note = keyMap[event.keyCode];
+        if (synthType === "physical") {
+            const instrument = document.getElementById("instrumentType").value;
+            if (note) playPhysicalSynth(note, instrument);
+        } else {
         const note = keyMap[event.keyCode];
         const waveType = document.getElementById("waveType").value;
-        if (note) playNote(note, waveType);
+            if (note) playNote(note, waveType);
+        }
     });
 
     document.addEventListener("keyup", stopNote);
