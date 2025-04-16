@@ -65,52 +65,54 @@
 <div>
     <label for="instrument">Select Instrument:</label>
     <select id="instrument">
-        <option value="guitar" selected>Guitar</option>
+        <option value="grandPiano" selected>Grand Piano</option>
+        <option value="guitar">Guitar</option>
         <option value="flute">Flute</option>
         <option value="tubularBell">Tubular Bell</option>
         <option value="guitar">Guitar</option>
+        <option value="violin" selected>Violin</option>
         <option value="marimba">Marimba</option>
     </select>
 </div>
 <div style="position: relative; width: 420px; height: 200px; margin: auto;">
     <div style="display: flex; position: absolute; bottom: 0; left: 0; right: 0; gap: 5px;">
-<button style="width: 37.5px; height: 90px; background: white; color: black; position: relative;"
+        <button style="width: 37.5px; height: 90px; background: white; color: black; position: relative;"
                 onclick="playSynth('C')">C &#9833;
         </button>
-<button style="width: 37.5px; height: 90px; background: white; color: black; position: relative;"
+        <button style="width: 37.5px; height: 90px; background: white; color: black; position: relative;"
                 onclick="playSynth('D')">D &#9834;
         </button>
-<button style="width: 37.5px; height: 90px; background: white; color: black; position: relative;"
+        <button style="width: 37.5px; height: 90px; background: white; color: black; position: relative;"
                 onclick="playSynth('E')">E &#9835;
         </button>
-<button style="width: 37.5px; height: 90px; background: white; color: black; position: relative;"
+        <button style="width: 37.5px; height: 90px; background: white; color: black; position: relative;"
                 onclick="playSynth('F')">F &#9836;
         </button>
-<button style="width: 37.5px; height: 90px; background: white; color: black; position: relative;"
+        <button style="width: 37.5px; height: 90px; background: white; color: black; position: relative;"
                 onclick="playSynth('G')">G &#9837;
         </button>
-<button style="width: 37.5px; height: 90px; background: white; color: black; position: relative;"
+        <button style="width: 37.5px; height: 90px; background: white; color: black; position: relative;"
                 onclick="playSynth('A')">A &#9838;
         </button>
-<button style="width: 37.5px; height: 90px; background: white; color: black; position: relative;"
-                onclick="playSynth('B')">B
+        <button style="width: 37.5px; height: 90px; background: white; color: black; position: relative;"
+                onclick="playSynth('B')">B &#9839;
         </button>
     </div>
     <div style="display: flex; position: absolute; bottom: 80px; left: 28px; gap: 10px;">
-<button style="width: 18.75px; height: 60px; background: black; color: white; z-index: 1;"
+        <button style="width: 18.75px; height: 60px; background: black; color: white; z-index: 1;"
                 onclick="playSynth('C#')">C#
         </button>
-<button style="width: 18.75px; height: 60px; background: black; color: white; z-index: 1; margin-left: 25.5px;"
+        <button style="width: 18.75px; height: 60px; background: black; color: white; z-index: 1; margin-left: 25.5px;"
                 onclick="playSynth('D#')">D#
         </button>
         <div style="flex: 1;"></div>
-<button style="width: 18.75px; height: 60px; background: black; color: white; z-index: 1;"
+        <button style="width: 18.75px; height: 60px; background: black; color: white; z-index: 1;"
                 onclick="playSynth('F#')">F#
         </button>
-<button style="width: 18.75px; height: 60px; background: black; color: white; z-index: 1; margin-left: 25.5px;"
+        <button style="width: 18.75px; height: 60px; background: black; color: white; z-index: 1; margin-left: 25.5px;"
                 onclick="playSynth('G#')">G#
         </button>
-<button style="width: 18.75px; height: 60px; background: black; color: white; z-index: 1; margin-left: 25.5px;"
+        <button style="width: 18.75px; height: 60px; background: black; color: white; z-index: 1; margin-left: 25.5px;"
                 onclick="playSynth('A#')">A#
         </button>
     </div>
@@ -145,6 +147,9 @@
     <button onclick="playBmChord()">B Minor (B–D–F#)</button>
     <hr/>
     <button onclick="playA7Chord()">A7 (A–C#–E–G)</button>
+    <button onclick="playF7Chord()">F7 (F–A–C–Eb)</button>
+    <button onclick="playFmaj7Chord()">Fmaj7 (F–A–C–E)</button>
+    <button onclick="playAm7Chord()">Am7 (A–C–E–G)</button>
 </div>
 <script>
     // Initialize Audio Context
@@ -152,10 +157,7 @@
 
     // Flute Sound Generation with Resonance and Sine Wave
     function fluteSound(ctx, frequency, duration) {
-        const oscillator = ctx.createOscillator();
-        oscillator.type = "sine"; // Sine wave for smooth flute sound
-        oscillator.detune.value = -10; // Slight detune for organic texture
-        oscillator.frequency.setValueAtTime(frequency, ctx.currentTime);
+        const oscillator = createOscillator(ctx, "sine", frequency, -10);
         const bandpass = ctx.createBiquadFilter(); // Add resonance with bandpass filter
         bandpass.type = "bandpass";
         bandpass.frequency.setValueAtTime(frequency, ctx.currentTime);
@@ -179,19 +181,10 @@
 
     // Tubular Bell Sound Generation
     function tubularBellSound(ctx, frequency, duration) {
-        const oscillator = ctx.createOscillator();
-        const secondOscillator = ctx.createOscillator(); // Add a secondary oscillator for depth
-        const thirdOscillator = ctx.createOscillator(); // Add a third oscillator for more resonance
-        const detuneOscillator = ctx.createOscillator(); // Detuned oscillator for additional harmonics
-
-        oscillator.type = "triangle"; // Use triangle wave for smoother tone
-        oscillator.frequency.setValueAtTime(frequency * 0.9, ctx.currentTime); // Lower pitch for depth
-        secondOscillator.type = "triangle";
-        secondOscillator.frequency.setValueAtTime(frequency * 1.3, ctx.currentTime); // Moderate harmonic
-        thirdOscillator.type = "sine"; // Use sine for richer resonance
-        thirdOscillator.frequency.setValueAtTime(frequency * 1.8, ctx.currentTime); // Add a lower harmonic
-        detuneOscillator.type = "triangle";
-        detuneOscillator.frequency.setValueAtTime(frequency * 0.95, ctx.currentTime); // More subtle detuning
+        const oscillator = createOscillator(ctx, "triangle", frequency * 0.9);
+        const secondOscillator = createOscillator(ctx, "triangle", frequency * 1.3); // Add a secondary oscillator for depth
+        const thirdOscillator = createOscillator(ctx, "sine", frequency * 1.8); // Add a third oscillator for more resonance
+        const detuneOscillator = createOscillator(ctx, "triangle", frequency * 0.95); // Detuned oscillator for additional harmonics
 
         oscillator.frequency.exponentialRampToValueAtTime(frequency * 0.88, ctx.currentTime + 0.8); // Larger drop for warmth
         thirdOscillator.frequency.exponentialRampToValueAtTime(frequency * 1.6, ctx.currentTime + 0.8); // Match ramp for mellow resonance
@@ -259,53 +252,6 @@
         playChord(selectedInstrument, audioContext, [fFrequency, aFlatFrequency, cFrequency], chordDuration);
     }
 
-    function playF7Chord() {
-        const fFrequency = 174.61; // F3
-        const aFrequency = 220.00; // A3
-        const cFrequency = 261.63; // C4
-        const eFlatFrequency = 311.13; // Eb4
-        const chordDuration = 2;
-        const selectedInstrument = document.getElementById("instrument").value;
-        playChord(selectedInstrument, audioContext, [fFrequency, aFrequency, cFrequency, eFlatFrequency], chordDuration);
-    }
-
-    function playFm7Chord() {
-        const fFrequency = 174.61; // F3
-        const aFlatFrequency = 207.65; // Ab3
-        const cFrequency = 261.63; // C4
-        const eFlatFrequency = 311.13; // Eb4
-        const chordDuration = 2;
-        const selectedInstrument = document.getElementById("instrument").value;
-        playChord(selectedInstrument, audioContext, [fFrequency, aFlatFrequency, cFrequency, eFlatFrequency], chordDuration);
-    }
-
-    function playFmaj7Chord() {
-        const fFrequency = 174.61; // F3
-        const aFrequency = 220.00; // A3
-        const cFrequency = 261.63; // C4
-        const eFrequency = 329.63; // E4
-        const chordDuration = 2;
-        const selectedInstrument = document.getElementById("instrument").value;
-        playChord(selectedInstrument, audioContext, [fFrequency, aFrequency, cFrequency, eFrequency], chordDuration);
-    }
-
-    function playFdiminishedChord() {
-        const fFrequency = 174.61; // F3
-        const aFlatFrequency = 207.65; // Ab3
-        const bFrequency = 246.94; // B3
-        const chordDuration = 2;
-        const selectedInstrument = document.getElementById("instrument").value;
-        playChord(selectedInstrument, audioContext, [fFrequency, aFlatFrequency, bFrequency], chordDuration);
-    }
-
-    function playFaugmentedChord() {
-        const fFrequency = 174.61; // F3
-        const aFrequency = 220.00; // A3
-        const cSharpFrequency = 277.18; // C#4
-        const chordDuration = 2;
-        const selectedInstrument = document.getElementById("instrument").value;
-        playChord(selectedInstrument, audioContext, [fFrequency, aFrequency, cSharpFrequency], chordDuration);
-    }
 
     function playDChord() {
         const dFrequency = 293.66; // D4
@@ -362,18 +308,38 @@
         playChord(selectedInstrument, audioContext, [aFrequency, cSharpFrequency, eFrequency, gFrequency], chordDuration);
     }
 
-    function playCmChord() {
+    function playFmaj7Chord() {
+        const fFrequency = 174.61; // F3
+        const aFrequency = 220.00; // A3
         const cFrequency = 261.63; // C4
-        const dSharpFrequency = 311.13; // D#4
-        const gFrequency = 392.00; // G4
-        const chordDuration = 2; // 2 seconds
+        const eFrequency = 329.63; // E4
+        const chordDuration = 2;
         const selectedInstrument = document.getElementById("instrument").value;
-        playChord(selectedInstrument, audioContext, [cFrequency, dSharpFrequency, gFrequency], chordDuration);
+        playChord(selectedInstrument, audioContext, [fFrequency, aFrequency, cFrequency, eFrequency], chordDuration);
     }
 
+    function playAm7Chord() {
+        const aFrequency = 220.00; // A3
+        const cFrequency = 261.63; // C4
+        const eFrequency = 329.63; // E4
+        const gFrequency = 392.00; // G4
+        const chordDuration = 2;
+        const selectedInstrument = document.getElementById("instrument").value;
+        playChord(selectedInstrument, audioContext, [aFrequency, cFrequency, eFrequency, gFrequency], chordDuration);
+    }
+
+    function playF7Chord() {
+        const fFrequency = 174.61; // F3
+        const aFrequency = 220.00; // A3
+        const cFrequency = 261.63; // C4
+        const eFlatFrequency = 311.13; // Eb4
+        const chordDuration = 2;
+        const selectedInstrument = document.getElementById("instrument").value;
+        playChord(selectedInstrument, audioContext, [fFrequency, aFrequency, cFrequency, eFlatFrequency], chordDuration);
+    }
+
+
     function playGmChord() {
-        const bFlatFrequency = 233.08; // Bb3
-        const dFrequency = 293.66; // D4
         const eFrequency = 164.81; // E3
         const gFrequency = 196.00; // G3
         const bFrequency = 246.94; // B3
@@ -400,14 +366,6 @@
         playChord(selectedInstrument, audioContext, [eFrequency, gFrequency, bFrequency], chordDuration);
     }
 
-    function playCMChord() {
-        const cFrequency = 261.63; // C4
-        const eFrequency = 329.63; // E4
-        const gFrequency = 392.00; // G4
-        const chordDuration = 2; // 2 seconds
-        const selectedInstrument = document.getElementById("instrument").value;
-        playChord(selectedInstrument, audioContext, [cFrequency, eFrequency, gFrequency], chordDuration);
-    }
 
     function playAmChord() {
         const aFrequency = 220.00; // A3
@@ -428,14 +386,9 @@
     }
 
     function guitarSound(ctx, frequency, duration) {
-        const oscillator = ctx.createOscillator();
-        oscillator.type = "sawtooth"; // Sawtooth wave for more realistic harmonics
-        oscillator.frequency.setValueAtTime(frequency, ctx.currentTime);
+        const oscillator = createOscillator(ctx, "sawtooth", frequency);
 
-        const detunedOscillator = ctx.createOscillator(); // Enhance with detuned harmonic oscillator
-        detunedOscillator.type = "sawtooth";
-        detunedOscillator.detune.setValueAtTime(-12, ctx.currentTime); // Detune for harmonic warmth
-        detunedOscillator.frequency.setValueAtTime(frequency, ctx.currentTime);
+        const detunedOscillator = createOscillator(ctx, "sawtooth", frequency, -12); // Enhance with detuned harmonic oscillator
 
         const gain = ctx.createGain();
         gain.gain.setValueAtTime(0, ctx.currentTime);
@@ -478,6 +431,8 @@
             tubularBell: tubularBellSound,
             marimba: marimbaSound,
             guitar: guitarSound,
+            grandPiano: pianoSound,
+            violin: violinSound,
         };
         const playFn = instruments[instrument];
         if (playFn) {
@@ -485,22 +440,33 @@
         }
     }
 
+    function adjustGainForChord(playFn, gain, duration, ctx) {
+        const gainNode = ctx.createGain();
+        gainNode.gain.setValueAtTime(gain, ctx.currentTime);
+        gainNode.gain.linearRampToValueAtTime(gain, ctx.currentTime + duration);
+        gainNode.connect(ctx.destination);
+        playFn();
+    }
+
     function playChord(instrument, ctx, frequencies, duration) {
-        frequencies.forEach((freq) => playInstrument(instrument, ctx, freq, duration));
+        const normalizedGain = 1 / Math.sqrt(frequencies.length); // Normalize combined amplitude
+        var normalizedDuration=2;
+        frequencies.forEach((freq) => {
+            const instrumentSound = () => playInstrument(instrument, ctx, freq, normalizedDuration);
+            adjustGainForChord(instrumentSound, normalizedGain, normalizedDuration, ctx);
+        });
+
+        frequencies.forEach((freq) => playInstrument(instrument, ctx, freq, normalizedDuration));
     }
 
-    function makeDistortionCurve(amount) {
-        const k = typeof amount === 'number' ? amount : 50;
-        const n_samples = 44100, curve = new Float32Array(n_samples);
-        const deg = Math.PI / 180;
-        for (let i = 0; i < n_samples; i++) {
-            const x = (i * 2) / n_samples - 1;
-            curve[i] = ((3 + k) * x * 20 * deg) / (Math.PI + k * Math.abs(x));
-        }
-        return curve;
+    function createOscillator(ctx, type, frequency, detune = 0) {
+        const oscillator = ctx.createOscillator();
+        oscillator.type = type;
+        oscillator.frequency.setValueAtTime(frequency, ctx.currentTime);
+        oscillator.detune.value = detune;
+        return oscillator;
     }
 
-    // Marimba Sound Generation
     function marimbaSound(ctx, frequency, duration) {
         const oscillator = ctx.createOscillator();
         oscillator.type = "square"; // Square wave for percussive tone
@@ -526,6 +492,54 @@
         oscillator.stop(ctx.currentTime + duration); // Stop after the specified duration
     }
 
+    // Violin Sound Generation
+    function violinSound(ctx, frequency, duration) {
+        const baseGain = ctx.createGain();
+        baseGain.gain.setValueAtTime(0, ctx.currentTime);
+        baseGain.gain.linearRampToValueAtTime(1.0, ctx.currentTime + 0.1); // Attack
+        baseGain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + duration); // Decay
+
+        const detuneOffset = 0;//(i === 0 ? 0 : i === 1 ? -5 : 5); // Slight detune for realism
+        const oscillator = createOscillator(ctx, "sawtooth", frequency, detuneOffset);
+        oscillator.frequency.setValueAtTime(frequency, ctx.currentTime);
+
+        const filter = ctx.createBiquadFilter();
+        filter.type = "lowpass";
+        filter.frequency.setValueAtTime(5000, ctx.currentTime); // Warm tone
+        filter.Q.setValueAtTime(1, ctx.currentTime);
+
+        oscillator.connect(filter);
+        filter.connect(baseGain);
+        baseGain.connect(ctx.destination);
+
+        oscillator.start();
+        oscillator.stop(ctx.currentTime + duration);
+    }
+
+    // Grand Piano Sound Generation
+    function pianoSound(ctx, frequency, duration) {
+        const baseGain = ctx.createGain();
+        baseGain.gain.setValueAtTime(0, ctx.currentTime);
+        baseGain.gain.linearRampToValueAtTime(1.0, ctx.currentTime + 0.03); // Quick attack
+        baseGain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + duration); // Long decay
+
+        for (let i = 0; i < 3; i++) {
+            const detuneOffset = (i === 0 ? 0 : i === 1 ? -2 : 2); // Slight detune for realism
+            const oscillator = createOscillator(ctx, "sine", frequency, detuneOffset);
+
+            const filter = ctx.createBiquadFilter();
+            filter.type = "lowpass";
+            filter.frequency.setValueAtTime(6000, ctx.currentTime); // Warm tone
+            filter.Q.setValueAtTime(1, ctx.currentTime);
+
+            oscillator.connect(filter);
+            filter.connect(baseGain);
+            baseGain.connect(ctx.destination);
+
+            oscillator.start();
+            oscillator.stop(ctx.currentTime + duration);
+        }
+    }
 </script>
 </body>
 </html>
