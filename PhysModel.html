@@ -2,23 +2,33 @@
 <html lang="en">
 <head>
     <script>
-        function playSynth(note) {
-            console.log('playSynth:', note)
-            const frequencies = {
-                A: 220.0,  // Frequency for A
-                "A#": 233.08, // Frequency for A#
-                B: 246.94, // Frequency for B
-                C: 261.63,  // Frequency for C
-                "C#": 277.18, // Frequency for C#
-                D: 293.66,  // Frequency for D
-                "D#": 311.13, // Frequency for D#
-                E: 329.63,  // Frequency for E
-                F: 349.23,  // Frequency for F
-                "F#": 369.99, // Frequency for F#
-                G: 392.00,   // Frequency for G
-                "G#": 415.30  // Frequency for G#
-            };
-            const frequency = frequencies[note] || 220.0; // Fallback to A if note is invalid
+        const frequencies = {
+            A: 220.0,  // Frequency for A
+            "A#": 233.08, // Frequency for A#
+            B: 246.94, // Frequency for B
+            C: 261.63,  // Frequency for C
+            "C#": 277.18, // Frequency for C#
+            D: 293.66,  // Frequency for D
+            "D#": 311.13, // Frequency for D#
+            E: 329.63,  // Frequency for E
+            F: 349.23,  // Frequency for F
+            "F#": 369.99, // Frequency for F#
+            G: 392.00,   // Frequency for G
+            "G#": 415.30  // Frequency for G#
+        };
+
+        function playSynth(input) {
+            console.log('playSynth:', input);
+            let note, frequency;
+            if (typeof input === 'number') { // Check if input is a MIDI note number
+                const midiNumber = input;
+                note = getNoteFromMIDINumber(midiNumber); // Convert MIDI number to note name
+                const octave = Math.floor(midiNumber / 12) - 1; // Calculate octave
+                frequency = 440 * Math.pow(2, (midiNumber - 69) / 12); // Convert MIDI to frequency
+            } else { // If input is a note name
+                note = input;
+                frequency = frequencies[note] || 220.0; // Fallback to A if note is invalid
+            }
             const selectedInstrument = document.getElementById("instrument").value;
             playInstrument(selectedInstrument, audioContext, frequency, 2);
         }
@@ -193,13 +203,7 @@
         const velocity = data2;
 
         if (command === 9 && velocity > 0) {
-            playSynth(getNoteFromMIDINumber(note));
-        // } else if (command === 8 || (command === 9 && velocity === 0)) {
-        //     const midiOutputSelect = document.getElementById("midiOutput");
-        //     const selectedOutput = availableOutputs.get(midiOutputSelect.value);
-        //     if (selectedOutput) {
-        //         sendMIDINoteOff(selectedOutput, note);
-        //     }
+            playSynth(note);
         }
     }
 
