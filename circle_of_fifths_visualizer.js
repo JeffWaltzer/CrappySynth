@@ -1,6 +1,22 @@
 // Select or generate circle container
 const canvas = document.createElement('canvas');
 document.body.appendChild(canvas);
+const noteDisplay = document.createElement('div');
+noteDisplay.style.position = 'absolute';
+noteDisplay.style.top = '10px';
+noteDisplay.style.left = '50%';
+noteDisplay.style.transform = 'translateX(-50%)';
+noteDisplay.style.fontSize = '24px';
+noteDisplay.style.fontWeight = 'bold';
+noteDisplay.textContent = 'Current Note: None';
+document.body.appendChild(noteDisplay);
+const midiDropdown = document.createElement('select');
+midiDropdown.style.position = 'absolute';
+midiDropdown.style.top = '50px';
+midiDropdown.style.left = '50%';
+midiDropdown.style.transform = 'translateX(-50%)';
+midiDropdown.style.fontSize = '16px';
+document.body.appendChild(midiDropdown);
 const ctx = canvas.getContext('2d');
 
 // Configure canvas dimensions
@@ -16,6 +32,106 @@ const radius = 250;
 const innerRadius = 180;
 
 // Web Audio Synthesizer Context
+const midiKeys = { // Map MIDI note numbers to Circle of Fifths keys
+    60: 'C', 62: 'D', 64: 'E', 65: 'F', 67: 'G', 69: 'A', 71: 'B', 61: 'Db',
+    63: 'Eb', 66: 'F#', 68: 'Ab', 70: 'Bb', 72: 'C', 73: 'C#m', 74: 'Dm',
+    75: 'Ebm', 76: 'Fm', 77: 'F#m', 78: 'Gm', 79: 'Abm', 80: 'Bbm'
+};
+let midiAccess = null;
+let lastConnectedDeviceId = null; // Track the last connected device ID
+let midiInputs = new Map(); // Track MIDI inputs
+let midiOutputs = new Map(); // Track MIDI outputs
+let activeKey = null;
+
+function onMIDISuccess(access) {
+    midiAccess = access;
+    alert('MIDI access granted. Successfully connected!');
+    setDefaultMIDIInput(); // Set the default MIDI input initially
+    for (let input of midiAccess.inputs.values()) {
+        input.addEventListener('midimessage', handleMIDIMessage); // Use addEventListener for better compatibility
+        lastConnectedDeviceId = input.id; // Update last connected device
+    }
+    updateMIDIDropdown(); // Populate dropdown with available devices
+    midiAccess.addEventListener('statechange', handleMIDIStateChange); // Track device connection changes
+}
+
+function handleMIDIStateChange(event) {
+    setDefaultMIDIInput(); // Update default MIDI input on state change
+    const port = event.port;
+    console.log(`State change detected for ${port.type} with ID: ${port.id}`);
+    console.log(`State change detected for ${port.type} with ID: ${port.id}`);
+    updateMIDIDropdown(); // Re-populate dropdown when state changes
+    if (port.state === 'connected') {
+        console.log(`Device connected: ${port.name}`);
+        if (port.type === 'input' && !midiInputs.has(port.id)) {
+            midiInputs.set(port.id, port);
+            port.addEventListener('midimessage', handleMIDIMessage);
+        } else if (port.type === 'output' && !midiOutputs.has(port.id)) {
+            midiOutputs.set(port.id, port);
+        }
+    } else if (port.state === 'disconnected') {
+        console.log(`Device disconnected: ${port.name}`);
+        if (port.type === 'input' && midiInputs.has(port.id)) {
+            midiInputs.delete(port.id);
+            if (port.id === lastConnectedDeviceId) {
+                lastConnectedDeviceId = null; // Clear last device ID if it disconnects
+            }
+        } else if (port.type === 'output' && midiOutputs.has(port.id)) {
+            midiOutputs.delete(port.id);
+        }
+    }
+    if (port.id === lastConnectedDeviceId) {
+        setDefaultMIDIInput(); // Automatically set to last connected device
+    }
+}
+
+
+function onMIDIFailure(error) {
+    console.error('Error accessing MIDI devices:', error);
+    alert('MIDI access is not available or was denied. Please check your permissions.');
+}
+
+// Helper function to set default MIDI input to the most recently connected device
+function setDefaultMIDIInput() {
+    if (midiAccess && midiInputs.size > 0) {
+        const lastConnected = Array.from(midiInputs.values()).find(device => device.id === lastConnectedDeviceId);
+        if (lastConnected) {
+            lastConnected.addEventListener('midimessage', handleMIDIMessage); // Attach handler
+            console.log(`Default MIDI input set: ${lastConnected.name}`);
+        }
+    }
+}
+
+function updateMIDIDropdown() {
+    midiDropdown.innerHTML = ''; // Clear existing options
+    for (let input of midiAccess.inputs.values()) {
+        const option = document.createElement('option');
+        option.value = input.id;
+        option.textContent = input.name;
+        midiDropdown.appendChild(option);
+    }
+    if (lastConnectedDeviceId) {
+        midiDropdown.value = lastConnectedDeviceId; // Set to last connected device
+    }
+}
+
+midiDropdown.addEventListener('change', () => {
+    const selectedDeviceId = midiDropdown.value;
+    const selectedInput = midiInputs.get(selectedDeviceId);
+    if (selectedInput) {
+        selectedInput.addEventListener('midimessage', handleMIDIMessage);
+        lastConnectedDeviceId = selectedDeviceId;
+        console.log(`Active MIDI input switched to: ${selectedInput.name}`);
+    }
+});
+
+navigator.requestMIDIAccess({sysex: false}).then(onMIDISuccess).catch(onMIDIFailure);
+
+// for (let input of midiAccess.inputs.values()) {
+//     midiInputs.set(input.id, input); // Store inputs in the map
+//     input.addEventListener('midimessage', handleMIDIMessage);
+// }
+
 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
 // Function to create a note oscillator
@@ -56,8 +172,6 @@ function drawCircle() {
     keys.forEach((key, index) => {
         const minorKey = minorKeys[index];
         const angle = index * anglePerKey;
-        const x = centerX + Math.cos(angle) * radius;
-        const y = centerY + Math.sin(angle) * radius;
 
         // Draw section
         ctx.beginPath();
@@ -97,6 +211,32 @@ function drawCircle() {
 }
 
 // Function to get clicked key
+function highlightKey(key) {
+    const index = keys.indexOf(key.replace('m', ''));
+    const minorIndex = minorKeys.indexOf(key);
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    drawCircle();
+    if (index !== -1) {
+        const angle = index * ((Math.PI * 2) / keys.length);
+        ctx.beginPath();
+        ctx.moveTo(centerX, centerY);
+        ctx.arc(centerX, centerY, radius, angle, angle + ((Math.PI * 2) / keys.length));
+        ctx.closePath();
+        ctx.fillStyle = 'rgba(0, 255, 0, 0.3)'; // Highlight color
+        ctx.fill();
+    }
+    if (minorIndex !== -1) {
+        const minorAngle = minorIndex * ((Math.PI * 2) / minorKeys.length);
+        ctx.beginPath();
+        ctx.moveTo(centerX, centerY);
+        ctx.arc(centerX, centerY, innerRadius, minorAngle, minorAngle + ((Math.PI * 2) / minorKeys.length));
+        ctx.closePath();
+        ctx.fillStyle = 'rgba(0, 0, 255, 0.3)'; // Highlight minor key
+        ctx.fill();
+    }
+}
+
 // Function to determine click location (inner or outer)
 
 function getKeyFromClick(x, y) {
@@ -114,6 +254,29 @@ function getKeyFromClick(x, y) {
 
 
 // Handle mouse click
+function handleMIDIMessage(event) {
+    console.log('MIDI Message Received:', event.data);
+    const [status, note, velocity = 0] = event.data; // Default velocity to 0
+    if (status === 144 && velocity > 0) { // Note On message
+        const key = midiKeys[note];
+        if (key) {
+            console.log(`Note On: ${key} (Velocity: ${velocity})`);
+            noteDisplay.textContent = `Current Note: ${key}`;
+            activeKey = key;
+            highlightKey(key);
+            playSynth(notesFrequencies[key.replace('m', '')]);
+        }
+    } else if (status === 128 || (status === 144 && velocity === 0)) { // Note Off or velocity 0
+        const key = midiKeys[note];
+        if (key) {
+            console.log(`Note Off: ${key}`);
+            noteDisplay.textContent = 'Current Note: None';
+        }
+        activeKey = null;
+        drawCircle();
+    }
+}
+
 canvas.addEventListener('click', (event) => {
     const rect = canvas.getBoundingClientRect();
     const mouseX = event.clientX - rect.left;
